@@ -38,25 +38,13 @@ func (s *Scanner) ScanTokens() ([]*Token, error) {
 	return s.tokens, nil
 }
 
-func (s *Scanner) addToken(tokenType tokentype.TokenType, literal ...Literal) {
-	token := &Token{
-		Type:   tokenType,
-		Lexeme: string(s.source[s.start:s.current]),
-		Line:   s.line,
-	}
-	if len(literal) > 0 {
-		token.Literal = literal[0]
-	}
-	s.tokens = append(s.tokens, token)
-}
-
 func (s *Scanner) advance() runes.Rune {
 	r := s.source[s.current]
 	s.current++
 	return r
 }
 
-func (s *Scanner) identifier() {
+func (s *Scanner) emitIdentifier() *Token {
 	for s.peek().IsAlphaNumeric() {
 		s.advance()
 	}
@@ -66,7 +54,55 @@ func (s *Scanner) identifier() {
 	if !ok {
 		tokenType = tokentype.Identifier
 	}
-	s.addToken(tokenType)
+	return s.emitToken(tokenType)
+}
+
+func (s *Scanner) emitNumber() *Token {
+	for s.peek().IsDigit() {
+		s.advance()
+	}
+
+	// Look for the fractional part.
+	if s.peek() == '.' && s.peekNext().IsDigit() {
+		// Consume the '.'
+		s.advance()
+
+		for s.peek().IsDigit() {
+			s.advance()
+		}
+	}
+	number := literal.ParseNumber(s.source[s.start:s.current])
+
+	return s.emitToken(tokentype.Number, number)
+}
+
+func (s *Scanner) emitString() (*Token, error) {
+	for s.peek() != '"' && !s.isAtEnd() {
+		if s.peek() == '\n' {
+			s.line++
+		}
+		s.advance()
+	}
+
+	if s.isAtEnd() {
+		return nil, &Error{Line: s.line, Err: ErrUnterminatedString}
+	}
+
+	s.advance()
+	value := literal.String(s.source[s.start+1 : s.current-1])
+	return s.emitToken(tokentype.String, value), nil
+}
+
+func (s *Scanner) emitToken(tokenType tokentype.TokenType, literal ...Literal) *Token {
+	token := &Token{
+		Type:   tokenType,
+		Lexeme: string(s.source[s.start:s.current]),
+		Line:   s.line,
+	}
+	if len(literal) > 0 {
+		token.Literal = literal[0]
+	}
+	return token
 }
 
 func (s *Scanner) isAtEnd() bool {
@@ -91,28 +127,6 @@ func (s *Scanner) matchTernary(expected runes.Rune, t, f tokentype.TokenType) to
 	return f
 }
 
-func (s *Scanner) number() error {
-	for s.peek().IsDigit() {
-		s.advance()
-	}
-
-	// Look for the fractional part.
-	if s.peek() == '.' && s.peekNext().IsDigit() {
-		// Consume the '.'
-		s.advance()
-
-		for s.peek().IsDigit() {
-			s.advance()
-		}
-	}
-	number, err := literal.ParseNumber(s.source[s.start:s.current])
-	if err != nil {
-		return &Error{Line: s.line, Err: err}
-	}
-	s.addToken(tokentype.Number, number)
-	return nil
-}
-
 func (s *Scanner) peek() runes.Rune {
 	if s.isAtEnd() {
 		return 0
@@ -128,36 +142,41 @@ func (s *Scanner) peekNext() runes.Rune {
 }
 
 func (s *Scanner) scanToken() error {
-	r := s.advance()
-	switch r {
+	var (
+		r     runes.Rune
+		token *Token
+		err   error
+	)
+
+	switch r = s.advance(); r {
 	case '(':
-		s.addToken(tokentype.LeftParen)
+		token = s.emitToken(tokentype.LeftParen)
 	case ')':
-		s.addToken(tokentype.RightParen)
+		token = s.emitToken(tokentype.RightParen)
 	case '{':
-		s.addToken(tokentype.LeftBrace)
+		token = s.emitToken(tokentype.LeftBrace)
 	case '}':
-		s.addToken(tokentype.RightBrace)
+		token = s.emitToken(tokentype.RightBrace)
 	case ',':
-		s.addToken(tokentype.Comma)
+		token = s.emitToken(tokentype.Comma)
 	case '.':
-		s.addToken(tokentype.Dot)
+		token = s.emitToken(tokentype.Dot)
 	case '-':
-		s.addToken(tokentype.Minus)
+		token = s.emitToken(tokentype.Minus)
 	case '+':
-		s.addToken(tokentype.Plus)
+		token = s.emitToken(tokentype.Plus)
 	case ';':
-		s.addToken(tokentype.Semicolon)
+		token = s.emitToken(tokentype.Semicolon)
 	case '*':
-		s.addToken(tokentype.Star)
+		token = s.emitToken(tokentype.Star)
 	case '!':
-		s.addToken(s.matchTernary('=', tokentype.BangEqual, tokentype.Bang))
+		token = s.emitToken(s.matchTernary('=', tokentype.BangEqual, tokentype.Bang))
 	case '=':
-		s.addToken(s.matchTernary('=', tokentype.EqualEqual, tokentype.Equal))
+		token = s.emitToken(s.matchTernary('=', tokentype.EqualEqual, tokentype.Equal))
 	case '<':
-		s.addToken(s.matchTernary('=', tokentype.LessEqual, tokentype.Less))
+		token = s.emitToken(s.matchTernary('=', tokentype.LessEqual, tokentype.Less))
 	case '>':
-		s.addToken(s.matchTernary('=', tokentype.GreaterEqual, tokentype.Greater))
+		token = s.emitToken(s.matchTernary('=', tokentype.GreaterEqual, tokentype.Greater))
 	case '/':
 		if s.match('/') {
 			// A comment goes until the end of the line.
@@ -165,7 +184,7 @@ func (s *Scanner) scanToken() error {
 				s.advance()
 			}
 		} else {
-			s.addToken(tokentype.Slash)
+			token = s.emitToken(tokentype.Slash)
 		}
 	case ' ', '\r', '\t':
 		// Ignore whitespace.
@@ -173,38 +192,20 @@ func (s *Scanner) scanToken() error {
 	case '\n':
 		s.line++
 	case '"':
-		if err := s.string(); err != nil {
+		if token, err = s.emitString(); err != nil {
 			return err
 		}
 	default:
 		if r.IsDigit() {
-			if err := s.number(); err != nil {
-				return err
-			}
+			token = s.emitNumber()
 		} else if r.IsAlpha() {
-			s.identifier()
+			token = s.emitIdentifier()
 		} else {
 			return &Error{Line: s.line, Err: ErrUnexpectedRune}
 		}
 	}
-
-	return nil
-}
-
-func (s *Scanner) string() error {
-	for s.peek() != '"' && !s.isAtEnd() {
-		if s.peek() == '\n' {
-			s.line++
-		}
-		s.advance()
+	if token != nil {
+		s.tokens = append(s.tokens, token)
 	}
-
-	if s.isAtEnd() {
-		return &Error{Line: s.line, Err: ErrUnterminatedString}
-	}
-
-	s.advance()
-	value := literal.String(s.source[s.start+1 : s.current-1])
-	s.addToken(tokentype.String, value)
 	return nil
 }

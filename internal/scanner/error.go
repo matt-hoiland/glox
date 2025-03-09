@@ -17,7 +17,7 @@ type Error struct {
 }
 
 func (err *Error) Error() string {
-	return fmt.Sprintf("[line %d] Error%s: %s\n", err.Line, err.Where, err.Err.Error())
+	return fmt.Sprintf("[line %d] Error%s: %s", err.Line, err.Where, err.Err.Error())
 }
 
 func (err *Error) Unwrap() error {

@@ -8,9 +8,12 @@ import (
 
 type Number float64
 
-func ParseNumber(text []runes.Rune) (Number, error) {
+func ParseNumber(text []runes.Rune) Number {
 	f64, err := strconv.ParseFloat(string(text), 64)
-	return Number(f64), err
+	if err != nil {
+		return Number(0)
+	}
+	return Number(f64)
 }
 
 func (n Number) String() string {

@@ -6,7 +6,6 @@ import (
 	"github.com/matt-hoiland/glox/internal/scanner/literal"
 	"github.com/matt-hoiland/glox/internal/scanner/runes"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestParseNumber(t *testing.T) {
@@ -15,16 +14,14 @@ func TestParseNumber(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		s := []runes.Rune("3.14")
-		n, err := literal.ParseNumber(s)
-		require.NoError(t, err)
+		n := literal.ParseNumber(s)
 		assert.Equal(t, literal.Number(3.14), n)
 	})
 
 	t.Run("error", func(t *testing.T) {
 		t.Parallel()
 		s := []runes.Rune("banana")
-		n, err := literal.ParseNumber(s)
-		require.Error(t, err)
+		n := literal.ParseNumber(s)
 		assert.Zero(t, n)
 	})
 }
