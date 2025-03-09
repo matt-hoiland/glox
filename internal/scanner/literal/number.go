@@ -1,10 +1,14 @@
 package literal
 
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/matt-hoiland/glox/internal/scanner/runes"
+)
 
 type Number float64
 
-func ParseNumber(text []rune) (Number, error) {
+func ParseNumber(text []runes.Rune) (Number, error) {
 	f64, err := strconv.ParseFloat(string(text), 64)
 	return Number(f64), err
 }

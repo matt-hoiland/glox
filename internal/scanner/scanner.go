@@ -2,11 +2,12 @@ package scanner
 
 import (
 	"github.com/matt-hoiland/glox/internal/scanner/literal"
+	"github.com/matt-hoiland/glox/internal/scanner/runes"
 	"github.com/matt-hoiland/glox/internal/scanner/tokentype"
 )
 
 type Scanner struct {
-	source  []rune
+	source  []runes.Rune
 	tokens  []*Token
 	start   int
 	current int
@@ -15,7 +16,7 @@ type Scanner struct {
 
 func New(source string) *Scanner {
 	return &Scanner{
-		source: []rune(source),
+		source: []runes.Rune(source),
 	}
 }
 
@@ -49,14 +50,14 @@ func (s *Scanner) addToken(tokenType tokentype.TokenType, literal ...Literal) {
 	s.tokens = append(s.tokens, token)
 }
 
-func (s *Scanner) advance() rune {
+func (s *Scanner) advance() runes.Rune {
 	r := s.source[s.current]
 	s.current++
 	return r
 }
 
 func (s *Scanner) identifier() {
-	for s.isAlphaNumeric(s.peek()) {
+	for s.peek().IsAlphaNumeric() {
 		s.advance()
 	}
 
@@ -68,25 +69,11 @@ func (s *Scanner) identifier() {
 	s.addToken(tokenType)
 }
 
-func (s *Scanner) isAlpha(r rune) bool {
-	return (r >= 'A' && r <= 'Z') ||
-		(r >= 'a' && r <= 'z') ||
-		r == '_'
-}
-
-func (s Scanner) isAlphaNumeric(r rune) bool {
-	return s.isAlpha(r) || s.isDigit(r)
-}
-
 func (s *Scanner) isAtEnd() bool {
 	return s.current >= len(s.source)
 }
 
-func (s *Scanner) isDigit(r rune) bool {
-	return r >= '0' && r <= '9'
-}
-
-func (s *Scanner) match(expected rune) bool {
+func (s *Scanner) match(expected runes.Rune) bool {
 	if s.isAtEnd() {
 		return false
 	}
@@ -97,7 +84,7 @@ func (s *Scanner) match(expected rune) bool {
 	return true
 }
 
-func (s *Scanner) matchTernary(expected rune, t, f tokentype.TokenType) tokentype.TokenType {
+func (s *Scanner) matchTernary(expected runes.Rune, t, f tokentype.TokenType) tokentype.TokenType {
 	if s.match(expected) {
 		return t
 	}
@@ -105,16 +92,16 @@ func (s *Scanner) matchTernary(expected rune, t, f tokentype.TokenType) tokentyp
 }
 
 func (s *Scanner) number() error {
-	for s.isDigit(s.peek()) {
+	for s.peek().IsDigit() {
 		s.advance()
 	}
 
 	// Look for the fractional part.
-	if s.peek() == '.' && s.isDigit(s.peekNext()) {
+	if s.peek() == '.' && s.peekNext().IsDigit() {
 		// Consume the '.'
 		s.advance()
 
-		for s.isDigit(s.peek()) {
+		for s.peek().IsDigit() {
 			s.advance()
 		}
 	}
@@ -126,14 +113,14 @@ func (s *Scanner) number() error {
 	return nil
 }
 
-func (s *Scanner) peek() rune {
+func (s *Scanner) peek() runes.Rune {
 	if s.isAtEnd() {
 		return 0
 	}
 	return s.source[s.current]
 }
 
-func (s *Scanner) peekNext() rune {
+func (s *Scanner) peekNext() runes.Rune {
 	if s.current+1 >= len(s.source) {
 		return 0
 	}
@@ -190,11 +177,11 @@ func (s *Scanner) scanToken() error {
 			return err
 		}
 	default:
-		if s.isDigit(r) {
+		if r.IsDigit() {
 			if err := s.number(); err != nil {
 				return err
 			}
-		} else if s.isAlpha(r) {
+		} else if r.IsAlpha() {
 			s.identifier()
 		} else {
 			return &Error{Line: s.line, Err: ErrUnexpectedRune}
