@@ -3,8 +3,9 @@ package runes_test
 import (
 	"testing"
 
-	"github.com/matt-hoiland/glox/internal/scanner/runes"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/matt-hoiland/glox/internal/scanner/runes"
 )
 
 func TestRune_IsAlpha(t *testing.T) {

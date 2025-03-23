@@ -3,12 +3,13 @@ package scanner_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/matt-hoiland/glox/internal/scanner"
 	"github.com/matt-hoiland/glox/internal/scanner/literal"
 	"github.com/matt-hoiland/glox/internal/scanner/runes"
 	"github.com/matt-hoiland/glox/internal/scanner/tokentype"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestScanner_ScanTokens(t *testing.T) {

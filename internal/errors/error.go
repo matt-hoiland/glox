@@ -1,13 +1,7 @@
-package scanner
+package errors
 
 import (
-	"errors"
 	"fmt"
-)
-
-var (
-	ErrUnexpectedRune     = errors.New("unexpected rune")
-	ErrUnterminatedString = errors.New("unterminated string")
 )
 
 type Error struct {

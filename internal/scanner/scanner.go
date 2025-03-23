@@ -1,9 +1,17 @@
 package scanner
 
 import (
+	"errors"
+
+	ierrors "github.com/matt-hoiland/glox/internal/errors"
 	"github.com/matt-hoiland/glox/internal/scanner/literal"
 	"github.com/matt-hoiland/glox/internal/scanner/runes"
 	"github.com/matt-hoiland/glox/internal/scanner/tokentype"
+)
+
+var (
+	ErrUnexpectedRune     = errors.New("unexpected rune")
+	ErrUnterminatedString = errors.New("unterminated string")
 )
 
 type Scanner struct {
@@ -85,7 +93,7 @@ func (s *Scanner) emitString() (*Token, error) {
 	}
 
 	if s.isAtEnd() {
-		return nil, &Error{Line: s.line, Err: ErrUnterminatedString}
+		return nil, &ierrors.Error{Line: s.line, Err: ErrUnterminatedString}
 	}
 
 	s.advance()
@@ -201,7 +209,7 @@ func (s *Scanner) scanToken() error {
 		} else if r.IsAlpha() {
 			token = s.emitIdentifier()
 		} else {
-			return &Error{Line: s.line, Err: ErrUnexpectedRune}
+			return &ierrors.Error{Line: s.line, Err: ErrUnexpectedRune}
 		}
 	}
 	if token != nil {

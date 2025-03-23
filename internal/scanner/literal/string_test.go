@@ -3,8 +3,9 @@ package literal_test
 import (
 	"testing"
 
-	"github.com/matt-hoiland/glox/internal/scanner/literal"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/matt-hoiland/glox/internal/scanner/literal"
 )
 
 func TestString_String(t *testing.T) {

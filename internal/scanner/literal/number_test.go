@@ -3,9 +3,10 @@ package literal_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/matt-hoiland/glox/internal/scanner/literal"
 	"github.com/matt-hoiland/glox/internal/scanner/runes"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestParseNumber(t *testing.T) {

@@ -3,8 +3,9 @@ package tokentype_test
 import (
 	"testing"
 
-	"github.com/matt-hoiland/glox/internal/scanner/tokentype"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/matt-hoiland/glox/internal/scanner/tokentype"
 )
 
 func TestTokenType_String(t *testing.T) {
