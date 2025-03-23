@@ -5,8 +5,8 @@ import (
 
 	ierrors "github.com/matt-hoiland/glox/internal/errors"
 	"github.com/matt-hoiland/glox/internal/expr"
+	"github.com/matt-hoiland/glox/internal/literal"
 	"github.com/matt-hoiland/glox/internal/scanner"
-	"github.com/matt-hoiland/glox/internal/scanner/literal"
 	"github.com/matt-hoiland/glox/internal/scanner/tokentype"
 )
 

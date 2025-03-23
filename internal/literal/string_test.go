@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/matt-hoiland/glox/internal/scanner/literal"
+	"github.com/matt-hoiland/glox/internal/literal"
 )
 
 func TestString_String(t *testing.T) {

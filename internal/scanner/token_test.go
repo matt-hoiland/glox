@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/matt-hoiland/glox/internal/literal"
 	"github.com/matt-hoiland/glox/internal/scanner"
-	"github.com/matt-hoiland/glox/internal/scanner/literal"
 	"github.com/matt-hoiland/glox/internal/scanner/tokentype"
 )
 
