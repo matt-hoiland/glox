@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/matt-hoiland/glox/internal/scanner/runes"
+	"github.com/matt-hoiland/glox/internal/runes"
 )
 
 type Boolean bool

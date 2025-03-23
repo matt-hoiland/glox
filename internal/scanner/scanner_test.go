@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/matt-hoiland/glox/internal/literal"
+	"github.com/matt-hoiland/glox/internal/runes"
 	"github.com/matt-hoiland/glox/internal/scanner"
-	"github.com/matt-hoiland/glox/internal/scanner/runes"
 	"github.com/matt-hoiland/glox/internal/scanner/tokentype"
 )
 
