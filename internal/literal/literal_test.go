@@ -9,6 +9,16 @@ import (
 	"github.com/matt-hoiland/glox/internal/scanner/runes"
 )
 
+func TestBoolean_String(t *testing.T) {
+	bt, bf := literal.Boolean(true), literal.Boolean(false)
+	assert.Equal(t, "true", bt.String())
+	assert.Equal(t, "false", bf.String())
+}
+
+func TestNil_String(t *testing.T) {
+	assert.Equal(t, "nil", literal.Nil{}.String())
+}
+
 func TestParseNumber(t *testing.T) {
 	t.Parallel()
 
@@ -31,4 +41,13 @@ func TestNumber_String(t *testing.T) {
 	n := literal.Number(3.14)
 	s := n.String()
 	assert.Equal(t, "3.14", s)
+}
+
+func TestString_String(t *testing.T) {
+	t.Parallel()
+
+	stdString := "Hello, world!"
+	myString := literal.String(stdString)
+	value := myString.String()
+	assert.Equal(t, stdString, value)
 }
