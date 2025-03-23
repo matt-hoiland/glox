@@ -1,9 +1,9 @@
-package scanner
+package token
 
 import (
 	"fmt"
 
-	"github.com/matt-hoiland/glox/internal/scanner/tokentype"
+	"github.com/matt-hoiland/glox/internal/token/tokentype"
 )
 
 type Literal interface {

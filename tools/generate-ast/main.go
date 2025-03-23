@@ -19,10 +19,10 @@ func main() {
 	}
 	outputDir := os.Args[1]
 	defineAST(outputDir, "Expr",
-		"Binary   : Left Expr[R], Operator *scanner.Token, Right Expr[R]",
+		"Binary   : Left Expr[R], Operator *token.Token, Right Expr[R]",
 		"Grouping : Expression Expr[R]",
 		"Literal  : Value Value",
-		"Unary    : Operator *scanner.Token, Right Expr[R]",
+		"Unary    : Operator *token.Token, Right Expr[R]",
 	)
 }
 
@@ -35,7 +35,7 @@ func defineAST(outputDir, baseName string, productions ...string) {
 	fmt.Fprintln(w, "import (")
 	fmt.Fprintln(w, `	"fmt"`)
 	fmt.Fprintln(w)
-	fmt.Fprintln(w, `	"github.com/matt-hoiland/glox/internal/scanner"`)
+	fmt.Fprintln(w, `	"github.com/matt-hoiland/glox/internal/token"`)
 	fmt.Fprintln(w, ")")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "type "+baseName+"[R any] interface {")

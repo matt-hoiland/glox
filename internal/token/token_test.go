@@ -1,4 +1,4 @@
-package scanner_test
+package token_test
 
 import (
 	"testing"
@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/matt-hoiland/glox/internal/literal"
-	"github.com/matt-hoiland/glox/internal/scanner"
-	"github.com/matt-hoiland/glox/internal/scanner/tokentype"
+	"github.com/matt-hoiland/glox/internal/token"
+	"github.com/matt-hoiland/glox/internal/token/tokentype"
 )
 
 func TestToken_String(t *testing.T) {
@@ -16,7 +16,7 @@ func TestToken_String(t *testing.T) {
 	t.Run("with literal", func(t *testing.T) {
 		t.Parallel()
 
-		token := &scanner.Token{
+		token := &token.Token{
 			Type:    tokentype.String,
 			Lexeme:  `"Hello, world!"`,
 			Literal: literal.String("Hello, world!"),
@@ -28,7 +28,7 @@ func TestToken_String(t *testing.T) {
 	t.Run("without literal", func(t *testing.T) {
 		t.Parallel()
 
-		token := &scanner.Token{
+		token := &token.Token{
 			Type:   tokentype.And,
 			Lexeme: `and`,
 		}

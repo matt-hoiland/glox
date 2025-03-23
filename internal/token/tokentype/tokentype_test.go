@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/matt-hoiland/glox/internal/scanner/tokentype"
+	"github.com/matt-hoiland/glox/internal/token/tokentype"
 )
 
 func TestTokenType_String(t *testing.T) {

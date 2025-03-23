@@ -6,7 +6,8 @@ import (
 	ierrors "github.com/matt-hoiland/glox/internal/errors"
 	"github.com/matt-hoiland/glox/internal/literal"
 	"github.com/matt-hoiland/glox/internal/runes"
-	"github.com/matt-hoiland/glox/internal/scanner/tokentype"
+	"github.com/matt-hoiland/glox/internal/token"
+	"github.com/matt-hoiland/glox/internal/token/tokentype"
 )
 
 var (
@@ -16,7 +17,7 @@ var (
 
 type Scanner struct {
 	source  []runes.Rune
-	tokens  []*Token
+	tokens  []*token.Token
 	start   int
 	current int
 	line    int
@@ -28,7 +29,7 @@ func New(source string) *Scanner {
 	}
 }
 
-func (s *Scanner) ScanTokens() ([]*Token, error) {
+func (s *Scanner) ScanTokens() ([]*token.Token, error) {
 	for !s.isAtEnd() {
 		// We are at the beginning of the next lexeme.
 		s.start = s.current
@@ -37,7 +38,7 @@ func (s *Scanner) ScanTokens() ([]*Token, error) {
 		}
 	}
 
-	s.tokens = append(s.tokens, &Token{
+	s.tokens = append(s.tokens, &token.Token{
 		Type:    tokentype.EOF,
 		Lexeme:  "",
 		Literal: nil,
@@ -52,7 +53,7 @@ func (s *Scanner) advance() runes.Rune {
 	return r
 }
 
-func (s *Scanner) emitIdentifier() *Token {
+func (s *Scanner) emitIdentifier() *token.Token {
 	for s.peek().IsAlphaNumeric() {
 		s.advance()
 	}
@@ -65,7 +66,7 @@ func (s *Scanner) emitIdentifier() *Token {
 	return s.emitToken(tokenType)
 }
 
-func (s *Scanner) emitNumber() *Token {
+func (s *Scanner) emitNumber() *token.Token {
 	for s.peek().IsDigit() {
 		s.advance()
 	}
@@ -84,7 +85,7 @@ func (s *Scanner) emitNumber() *Token {
 	return s.emitToken(tokentype.Number, number)
 }
 
-func (s *Scanner) emitString() (*Token, error) {
+func (s *Scanner) emitString() (*token.Token, error) {
 	for s.peek() != '"' && !s.isAtEnd() {
 		if s.peek() == '\n' {
 			s.line++
@@ -101,8 +102,8 @@ func (s *Scanner) emitString() (*Token, error) {
 	return s.emitToken(tokentype.String, value), nil
 }
 
-func (s *Scanner) emitToken(tokenType tokentype.TokenType, literal ...Literal) *Token {
-	token := &Token{
+func (s *Scanner) emitToken(tokenType tokentype.TokenType, literal ...token.Literal) *token.Token {
+	token := &token.Token{
 		Type:   tokenType,
 		Lexeme: string(s.source[s.start:s.current]),
 		Line:   s.line,
@@ -152,7 +153,7 @@ func (s *Scanner) peekNext() runes.Rune {
 func (s *Scanner) scanToken() error {
 	var (
 		r     runes.Rune
-		token *Token
+		token *token.Token
 		err   error
 	)
 

@@ -6,8 +6,8 @@ import (
 	ierrors "github.com/matt-hoiland/glox/internal/errors"
 	"github.com/matt-hoiland/glox/internal/expr"
 	"github.com/matt-hoiland/glox/internal/literal"
-	"github.com/matt-hoiland/glox/internal/scanner"
-	"github.com/matt-hoiland/glox/internal/scanner/tokentype"
+	"github.com/matt-hoiland/glox/internal/token"
+	"github.com/matt-hoiland/glox/internal/token/tokentype"
 )
 
 var (
@@ -16,11 +16,11 @@ var (
 )
 
 type Parser struct {
-	Tokens  []*scanner.Token
+	Tokens  []*token.Token
 	Current int
 }
 
-func New(tokens []*scanner.Token) *Parser {
+func New(tokens []*token.Token) *Parser {
 	return &Parser{
 		Tokens:  tokens,
 		Current: 0,
@@ -37,7 +37,7 @@ func (p *Parser) Parse() (expr.Expr[string], error) {
 
 // advance consumes the current token and returns it.
 // This is similar to how [scanner.Scanner]'s corresponding method crawled through characters.
-func (p *Parser) advance() *scanner.Token {
+func (p *Parser) advance() *token.Token {
 	if !p.isAtEnd() {
 		p.Current++
 	}
@@ -53,7 +53,7 @@ func (p *Parser) check(tokenType tokentype.TokenType) bool {
 	return p.peek().Type == tokenType
 }
 
-func (p *Parser) consume(tokenType tokentype.TokenType, err error) (*scanner.Token, error) {
+func (p *Parser) consume(tokenType tokentype.TokenType, err error) (*token.Token, error) {
 	if p.check(tokenType) {
 		return p.advance(), nil
 	}
@@ -61,7 +61,7 @@ func (p *Parser) consume(tokenType tokentype.TokenType, err error) (*scanner.Tok
 	return nil, p.error(p.peek(), err)
 }
 
-func (p *Parser) error(token *scanner.Token, err error) error {
+func (p *Parser) error(token *token.Token, err error) error {
 	return &ierrors.Error{
 		Line: token.Line,
 		Err:  err,
@@ -87,12 +87,12 @@ func (p *Parser) match(tokenTypes ...tokentype.TokenType) bool {
 }
 
 // peek returns the current token we have yet to consume.
-func (p *Parser) peek() *scanner.Token {
+func (p *Parser) peek() *token.Token {
 	return p.Tokens[p.Current]
 }
 
 // previous returns the most recently consumed token.
-func (p *Parser) previous() *scanner.Token {
+func (p *Parser) previous() *token.Token {
 	return p.Tokens[p.Current-1]
 }
 

@@ -4,7 +4,7 @@ package expr
 import (
 	"fmt"
 
-	"github.com/matt-hoiland/glox/internal/scanner"
+	"github.com/matt-hoiland/glox/internal/token"
 )
 
 type Expr[R any] interface {
@@ -24,13 +24,13 @@ type Visitor[R any] interface {
 
 type Binary[R any] struct {
 	Left     Expr[R]
-	Operator *scanner.Token
+	Operator *token.Token
 	Right    Expr[R]
 }
 
 var _ Expr[any] = (*Binary[any])(nil)
 
-func NewBinary[R any](Left Expr[R], Operator *scanner.Token, Right Expr[R]) *Binary[R] {
+func NewBinary[R any](Left Expr[R], Operator *token.Token, Right Expr[R]) *Binary[R] {
 	return &Binary[R]{
 		Left:     Left,
 		Operator: Operator,
@@ -75,13 +75,13 @@ func (e *Literal[R]) Accept(visitor Visitor[R]) R {
 }
 
 type Unary[R any] struct {
-	Operator *scanner.Token
+	Operator *token.Token
 	Right    Expr[R]
 }
 
 var _ Expr[any] = (*Unary[any])(nil)
 
-func NewUnary[R any](Operator *scanner.Token, Right Expr[R]) *Unary[R] {
+func NewUnary[R any](Operator *token.Token, Right Expr[R]) *Unary[R] {
 	return &Unary[R]{
 		Operator: Operator,
 		Right:    Right,

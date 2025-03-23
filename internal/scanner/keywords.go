@@ -1,6 +1,6 @@
 package scanner
 
-import "github.com/matt-hoiland/glox/internal/scanner/tokentype"
+import "github.com/matt-hoiland/glox/internal/token/tokentype"
 
 var keywords = map[string]tokentype.TokenType{
 	"and":    tokentype.And,

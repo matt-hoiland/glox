@@ -5,17 +5,17 @@ import (
 
 	"github.com/matt-hoiland/glox/internal/expr"
 	"github.com/matt-hoiland/glox/internal/literal"
-	"github.com/matt-hoiland/glox/internal/scanner"
-	"github.com/matt-hoiland/glox/internal/scanner/tokentype"
+	"github.com/matt-hoiland/glox/internal/token"
+	"github.com/matt-hoiland/glox/internal/token/tokentype"
 )
 
 func ExampleASTPrinter() {
 	expression := expr.NewBinary(
 		expr.NewUnary(
-			scanner.NewToken(tokentype.Minus, "-", nil, 1),
+			token.NewToken(tokentype.Minus, "-", nil, 1),
 			expr.NewLiteral[string](literal.Number(123)),
 		),
-		scanner.NewToken(tokentype.Star, "*", nil, 1),
+		token.NewToken(tokentype.Star, "*", nil, 1),
 		expr.NewGrouping(
 			expr.NewLiteral[string](nil),
 		),

@@ -9,7 +9,8 @@ import (
 	"github.com/matt-hoiland/glox/internal/literal"
 	"github.com/matt-hoiland/glox/internal/runes"
 	"github.com/matt-hoiland/glox/internal/scanner"
-	"github.com/matt-hoiland/glox/internal/scanner/tokentype"
+	"github.com/matt-hoiland/glox/internal/token"
+	"github.com/matt-hoiland/glox/internal/token/tokentype"
 )
 
 func TestScanner_ScanTokens(t *testing.T) {
@@ -18,7 +19,7 @@ func TestScanner_ScanTokens(t *testing.T) {
 	type Test struct {
 		Name   string
 		Source string
-		Tokens []*scanner.Token
+		Tokens []*token.Token
 		Err    error
 	}
 
@@ -26,14 +27,14 @@ func TestScanner_ScanTokens(t *testing.T) {
 		{
 			Name:   "success/empty source",
 			Source: ``,
-			Tokens: []*scanner.Token{
+			Tokens: []*token.Token{
 				{Type: tokentype.EOF},
 			},
 		},
 		{
 			Name:   "success/assign string to variable",
 			Source: `var language = "lox";`,
-			Tokens: []*scanner.Token{
+			Tokens: []*token.Token{
 				{Type: tokentype.Var, Lexeme: `var`},
 				{Type: tokentype.Identifier, Lexeme: `language`},
 				{Type: tokentype.Equal, Lexeme: `=`},
@@ -51,7 +52,7 @@ func TestScanner_ScanTokens(t *testing.T) {
 		{
 			Name:   "success/assign number to variable",
 			Source: `var pi = 873.32;`,
-			Tokens: []*scanner.Token{
+			Tokens: []*token.Token{
 				{Type: tokentype.Var, Lexeme: `var`},
 				{Type: tokentype.Identifier, Lexeme: `pi`},
 				{Type: tokentype.Equal, Lexeme: `=`},
@@ -64,7 +65,7 @@ func TestScanner_ScanTokens(t *testing.T) {
 			Name: "success/multiline string",
 			Source: `"First line
 			Second line"`,
-			Tokens: []*scanner.Token{
+			Tokens: []*token.Token{
 				{Type: tokentype.String, Lexeme: `"First line
 			Second line"`, Literal: literal.String([]runes.Rune(`First line
 			Second line`)), Line: 1},
@@ -74,7 +75,7 @@ func TestScanner_ScanTokens(t *testing.T) {
 		{
 			Name:   "success/single character punctuation",
 			Source: `(){}=;*+-/.,!`,
-			Tokens: []*scanner.Token{
+			Tokens: []*token.Token{
 				{Type: tokentype.LeftParen, Lexeme: `(`},
 				{Type: tokentype.RightParen, Lexeme: `)`},
 				{Type: tokentype.LeftBrace, Lexeme: `{`},
@@ -94,7 +95,7 @@ func TestScanner_ScanTokens(t *testing.T) {
 		{
 			Name:   "success/double character punctuation",
 			Source: `= <= >= == !=`,
-			Tokens: []*scanner.Token{
+			Tokens: []*token.Token{
 				{Type: tokentype.Equal, Lexeme: `=`},
 				{Type: tokentype.LessEqual, Lexeme: `<=`},
 				{Type: tokentype.GreaterEqual, Lexeme: `>=`},
@@ -111,7 +112,7 @@ func TestScanner_ScanTokens(t *testing.T) {
 					return n + 2;
 				}
 			`,
-			Tokens: []*scanner.Token{
+			Tokens: []*token.Token{
 				{Type: tokentype.Fun, Lexeme: `fun`, Line: 2},
 				{Type: tokentype.Identifier, Lexeme: `add_two`, Line: 2},
 				{Type: tokentype.LeftParen, Lexeme: `(`, Line: 2},
@@ -130,7 +131,7 @@ func TestScanner_ScanTokens(t *testing.T) {
 		{
 			Name:   "success/number literal",
 			Source: `4.`,
-			Tokens: []*scanner.Token{
+			Tokens: []*token.Token{
 				{Type: tokentype.Number, Lexeme: `4`, Literal: literal.Number(4)},
 				{Type: tokentype.Dot, Lexeme: `.`},
 				{Type: tokentype.EOF},
