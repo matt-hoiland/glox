@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/matt-hoiland/glox/internal/astprinter"
 	"github.com/matt-hoiland/glox/internal/constants/exit"
 	"github.com/matt-hoiland/glox/internal/expr"
+	"github.com/matt-hoiland/glox/internal/interpreter"
 	"github.com/matt-hoiland/glox/internal/parser"
 	"github.com/matt-hoiland/glox/internal/scanner"
 	"github.com/matt-hoiland/glox/internal/token"
@@ -46,7 +46,11 @@ func run(code string) error {
 		return err
 	}
 
-	fmt.Println(astprinter.Print(ast))
+	value, err := interpreter.New().Evaluate(ast)
+	if err != nil {
+		return err
+	}
+	fmt.Println(value.String())
 	return nil
 }
 
