@@ -141,6 +141,14 @@ func TestScanner_ScanTokens(t *testing.T) {
 			Source: `'`,
 			Err:    scanner.ErrUnexpectedRune,
 		},
+		{
+			Name:   "success/nil literal",
+			Source: `nil`,
+			Tokens: []*token.Token{
+				{Type: token.TypeNil, Lexeme: `nil`},
+				{Type: token.TypeEOF},
+			},
+		},
 	}
 
 	for _, test := range tests {

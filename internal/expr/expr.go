@@ -6,83 +6,83 @@ import (
 	"github.com/matt-hoiland/glox/internal/token"
 )
 
-type Expr[R any] interface {
-	Accept(Visitor[R]) R
+type Expr interface {
+	Accept(Visitor) loxtype.Type
 }
 
-type Visitor[R any] interface {
-	VisitBinary(*Binary[R]) R
-	VisitGrouping(*Grouping[R]) R
-	VisitLiteral(*Literal[R]) R
-	VisitUnary(*Unary[R]) R
+type Visitor interface {
+	VisitBinary(*Binary) loxtype.Type
+	VisitGrouping(*Grouping) loxtype.Type
+	VisitLiteral(*Literal) loxtype.Type
+	VisitUnary(*Unary) loxtype.Type
 }
 
-type Binary[R any] struct {
-	Left     Expr[R]
+type Binary struct {
+	Left     Expr
 	Operator *token.Token
-	Right    Expr[R]
+	Right    Expr
 }
 
-var _ Expr[any] = (*Binary[any])(nil)
+var _ Expr = (*Binary)(nil)
 
-func NewBinary[R any](Left Expr[R], Operator *token.Token, Right Expr[R]) *Binary[R] {
-	return &Binary[R]{
+func NewBinary(Left Expr, Operator *token.Token, Right Expr) *Binary {
+	return &Binary{
 		Left:     Left,
 		Operator: Operator,
 		Right:    Right,
 	}
 }
 
-func (e *Binary[R]) Accept(visitor Visitor[R]) R {
+func (e *Binary) Accept(visitor Visitor) loxtype.Type {
 	return visitor.VisitBinary(e)
 }
 
-type Grouping[R any] struct {
-	Expression Expr[R]
+type Grouping struct {
+	Expression Expr
 }
 
-var _ Expr[any] = (*Grouping[any])(nil)
+var _ Expr = (*Grouping)(nil)
 
-func NewGrouping[R any](Expression Expr[R]) *Grouping[R] {
-	return &Grouping[R]{
+func NewGrouping(Expression Expr) *Grouping {
+	return &Grouping{
 		Expression: Expression,
 	}
 }
 
-func (e *Grouping[R]) Accept(visitor Visitor[R]) R {
+func (e *Grouping) Accept(visitor Visitor) loxtype.Type {
 	return visitor.VisitGrouping(e)
 }
 
-type Literal[R any] struct {
+type Literal struct {
 	Value loxtype.Type
 }
 
-var _ Expr[any] = (*Literal[any])(nil)
+var _ Expr = (*Literal)(nil)
 
-func NewLiteral[R any](Value loxtype.Type) *Literal[R] {
-	return &Literal[R]{
+func NewLiteral(Value loxtype.Type) *Literal {
+	return &Literal{
 		Value: Value,
 	}
 }
 
-func (e *Literal[R]) Accept(visitor Visitor[R]) R {
+func (e *Literal) Accept(visitor Visitor) loxtype.Type {
 	return visitor.VisitLiteral(e)
 }
 
-type Unary[R any] struct {
+type Unary struct {
 	Operator *token.Token
-	Right    Expr[R]
+	Right    Expr
 }
 
-var _ Expr[any] = (*Unary[any])(nil)
+var _ Expr = (*Unary)(nil)
 
-func NewUnary[R any](Operator *token.Token, Right Expr[R]) *Unary[R] {
-	return &Unary[R]{
+func NewUnary(Operator *token.Token, Right Expr) *Unary {
+	return &Unary{
 		Operator: Operator,
 		Right:    Right,
 	}
 }
 
-func (e *Unary[R]) Accept(visitor Visitor[R]) R {
+func (e *Unary) Accept(visitor Visitor) loxtype.Type {
 	return visitor.VisitUnary(e)
 }

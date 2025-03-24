@@ -26,7 +26,7 @@ func New(tokens []*token.Token) *Parser {
 	}
 }
 
-func (p *Parser) Parse() (expr.Expr[string], error) {
+func (p *Parser) Parse() (expr.Expr, error) {
 	return p.expression()
 }
 
@@ -127,14 +127,14 @@ func (p *Parser) synchronize() {
 // expression implements the production:
 //
 //	expression -> equality ;
-func (p *Parser) expression() (expr.Expr[string], error) {
+func (p *Parser) expression() (expr.Expr, error) {
 	return p.equality()
 }
 
 // equality implements the production:
 //
 //	equality -> comparison ( ( "!=" | "==" ) comparison )* ;
-func (p *Parser) equality() (expr.Expr[string], error) {
+func (p *Parser) equality() (expr.Expr, error) {
 	left, err := p.comparison()
 	if err != nil {
 		return nil, err
@@ -155,7 +155,7 @@ func (p *Parser) equality() (expr.Expr[string], error) {
 // comparison implements the production:
 //
 //	comparison -> term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
-func (p *Parser) comparison() (expr.Expr[string], error) {
+func (p *Parser) comparison() (expr.Expr, error) {
 	left, err := p.term()
 	if err != nil {
 		return nil, err
@@ -176,7 +176,7 @@ func (p *Parser) comparison() (expr.Expr[string], error) {
 // term implements the production:
 //
 //	term -> factor ( ( "-" | "+" ) factor )* ;
-func (p *Parser) term() (expr.Expr[string], error) {
+func (p *Parser) term() (expr.Expr, error) {
 	left, err := p.factor()
 	if err != nil {
 		return nil, err
@@ -197,7 +197,7 @@ func (p *Parser) term() (expr.Expr[string], error) {
 // factor implements the production:
 //
 //	factor -> unary ( ( "/" | "*" ) unary )* ;
-func (p *Parser) factor() (expr.Expr[string], error) {
+func (p *Parser) factor() (expr.Expr, error) {
 	left, err := p.unary()
 	if err != nil {
 		return nil, err
@@ -219,7 +219,7 @@ func (p *Parser) factor() (expr.Expr[string], error) {
 //
 //	 unary -> ( "!" | "-" ) unary
 //		    | primary ;
-func (p *Parser) unary() (expr.Expr[string], error) {
+func (p *Parser) unary() (expr.Expr, error) {
 	if p.match(token.TypeBang, token.TypeMinus) {
 		operator := p.previous()
 		right, err := p.unary()
@@ -236,18 +236,18 @@ func (p *Parser) unary() (expr.Expr[string], error) {
 //
 //	 primary -> NUMBER | STRING | "true" | "false" | "nil"
 //		      | "(" expression ")" ;
-func (p *Parser) primary() (expr.Expr[string], error) {
+func (p *Parser) primary() (expr.Expr, error) {
 	if p.match(token.TypeFalse) {
-		return expr.NewLiteral[string](loxtype.Boolean(false)), nil
+		return expr.NewLiteral(loxtype.Boolean(false)), nil
 	}
 	if p.match(token.TypeTrue) {
-		return expr.NewLiteral[string](loxtype.Boolean(true)), nil
+		return expr.NewLiteral(loxtype.Boolean(true)), nil
 	}
 	if p.match(token.TypeNil) {
-		return expr.NewLiteral[string](loxtype.Nil{}), nil
+		return expr.NewLiteral(loxtype.Nil{}), nil
 	}
 	if p.match(token.TypeNumber, token.TypeString) {
-		return expr.NewLiteral[string](p.previous().Literal), nil
+		return expr.NewLiteral(p.previous().Literal), nil
 	}
 	if p.match(token.TypeLeftParen) {
 		expression, err := p.expression()

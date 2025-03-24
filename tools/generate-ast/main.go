@@ -19,10 +19,10 @@ func main() {
 	}
 	outputDir := os.Args[1]
 	defineAST(outputDir, "Expr",
-		"Binary   : Left Expr[R], Operator *token.Token, Right Expr[R]",
-		"Grouping : Expression Expr[R]",
+		"Binary   : Left Expr, Operator *token.Token, Right Expr",
+		"Grouping : Expression Expr",
 		"Literal  : Value loxtype.Type",
-		"Unary    : Operator *token.Token, Right Expr[R]",
+		"Unary    : Operator *token.Token, Right Expr",
 	)
 }
 
@@ -37,8 +37,8 @@ func defineAST(outputDir, baseName string, productions ...string) {
 	fmt.Fprintln(w, `	"github.com/matt-hoiland/glox/internal/token"`)
 	fmt.Fprintln(w, ")")
 	fmt.Fprintln(w)
-	fmt.Fprintln(w, "type "+baseName+"[R any] interface {")
-	fmt.Fprintln(w, `	Accept(Visitor[R]) R`)
+	fmt.Fprintln(w, "type "+baseName+" interface {")
+	fmt.Fprintln(w, `	Accept(Visitor) loxtype.Type`)
 	fmt.Fprintln(w, "}")
 	fmt.Fprintln(w)
 	defineVisitor(w, baseName, productions...)
@@ -64,16 +64,16 @@ func defineAST(outputDir, baseName string, productions ...string) {
 }
 
 func defineType(w io.Writer, baseName, typeName, fieldList string) {
-	fmt.Fprintf(w, "type %s[R any] struct {\n", typeName)
+	fmt.Fprintf(w, "type %s struct {\n", typeName)
 	for field := range strings.SplitSeq(fieldList, ",") {
 		fmt.Fprintf(w, "\t%s\n", strings.TrimSpace(field))
 	}
 	fmt.Fprintln(w, "}")
 	fmt.Fprintln(w)
-	fmt.Fprintf(w, "var _ %s[any] = (*%s[any])(nil)\n", baseName, typeName)
+	fmt.Fprintf(w, "var _ %s = (*%s)(nil)\n", baseName, typeName)
 	fmt.Fprintln(w)
-	fmt.Fprintf(w, "func New%s[R any](%s) *%s[R] {\n", typeName, fieldList, typeName)
-	fmt.Fprintf(w, "\treturn &%s[R]{\n", typeName)
+	fmt.Fprintf(w, "func New%s(%s) *%s {\n", typeName, fieldList, typeName)
+	fmt.Fprintf(w, "\treturn &%s{\n", typeName)
 	for fieldPair := range strings.SplitSeq(fieldList, ",") {
 		field := strings.TrimSpace(strings.Split(strings.TrimSpace(fieldPair), " ")[0])
 		fmt.Fprintf(w, "\t%s: %s,\n", field, field)
@@ -81,17 +81,17 @@ func defineType(w io.Writer, baseName, typeName, fieldList string) {
 	fmt.Fprintln(w, "\t}")
 	fmt.Fprintln(w, "}")
 	fmt.Fprintln(w)
-	fmt.Fprintf(w, "func (e *%s[R]) Accept(visitor Visitor[R]) R {\n", typeName)
+	fmt.Fprintf(w, "func (e *%s) Accept(visitor Visitor) loxtype.Type {\n", typeName)
 	fmt.Fprintf(w, "\treturn visitor.Visit%s(e)\n", typeName)
 	fmt.Fprintln(w, "}")
 	fmt.Fprintln(w)
 }
 
 func defineVisitor(w io.Writer, _ string, productions ...string) {
-	fmt.Fprintln(w, `type Visitor[R any] interface {`)
+	fmt.Fprintln(w, `type Visitor interface {`)
 	for _, production := range productions {
 		typeName := strings.TrimSpace(strings.Split(production, ":")[0])
-		fmt.Fprintf(w, "\tVisit%s(*%s[R]) R\n", typeName, typeName)
+		fmt.Fprintf(w, "\tVisit%s(*%s) loxtype.Type\n", typeName, typeName)
 	}
 	fmt.Fprintln(w, `}`)
 }

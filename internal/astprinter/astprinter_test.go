@@ -13,11 +13,11 @@ func ExampleASTPrinter() {
 	expression := expr.NewBinary(
 		expr.NewUnary(
 			token.NewToken(token.TypeMinus, "-", nil, 1),
-			expr.NewLiteral[string](loxtype.Number(123)),
+			expr.NewLiteral(loxtype.Number(123)),
 		),
 		token.NewToken(token.TypeStar, "*", nil, 1),
 		expr.NewGrouping(
-			expr.NewLiteral[string](nil),
+			expr.NewLiteral(nil),
 		),
 	)
 

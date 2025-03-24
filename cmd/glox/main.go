@@ -34,7 +34,7 @@ func main() {
 func run(code string) error {
 	var (
 		tokens []*token.Token
-		ast    expr.Expr[string]
+		ast    expr.Expr
 		err    error
 	)
 
