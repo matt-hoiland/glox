@@ -2,8 +2,6 @@ package token
 
 import (
 	"fmt"
-
-	"github.com/matt-hoiland/glox/internal/token/tokentype"
 )
 
 type Literal interface {
@@ -11,13 +9,13 @@ type Literal interface {
 }
 
 type Token struct {
-	Type    tokentype.TokenType
+	Type    Type
 	Lexeme  string
 	Literal Literal
 	Line    int
 }
 
-func NewToken(tokenType tokentype.TokenType, lexeme string, literal Literal, line int) *Token {
+func NewToken(tokenType Type, lexeme string, literal Literal, line int) *Token {
 	return &Token{
 		Type:    tokenType,
 		Lexeme:  lexeme,

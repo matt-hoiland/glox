@@ -1,22 +1,22 @@
 package scanner
 
-import "github.com/matt-hoiland/glox/internal/token/tokentype"
+import "github.com/matt-hoiland/glox/internal/token"
 
-var keywords = map[string]tokentype.TokenType{
-	"and":    tokentype.And,
-	"class":  tokentype.Class,
-	"else":   tokentype.Else,
-	"false":  tokentype.False,
-	"for":    tokentype.For,
-	"fun":    tokentype.Fun,
-	"if":     tokentype.If,
-	"nil":    tokentype.Nil,
-	"or":     tokentype.Or,
-	"print":  tokentype.Print,
-	"return": tokentype.Return,
-	"super":  tokentype.Super,
-	"this":   tokentype.This,
-	"true":   tokentype.True,
-	"var":    tokentype.Var,
-	"while":  tokentype.While,
+var keywords = map[string]token.Type{
+	"and":    token.TypeAnd,
+	"class":  token.TypeClass,
+	"else":   token.TypeElse,
+	"false":  token.TypeFalse,
+	"for":    token.TypeFor,
+	"fun":    token.TypeFun,
+	"if":     token.TypeIf,
+	"nil":    token.TypeNil,
+	"or":     token.TypeOr,
+	"print":  token.TypePrint,
+	"return": token.TypeReturn,
+	"super":  token.TypeSuper,
+	"this":   token.TypeThis,
+	"true":   token.TypeTrue,
+	"var":    token.TypeVar,
+	"while":  token.TypeWhile,
 }

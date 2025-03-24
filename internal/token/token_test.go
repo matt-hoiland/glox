@@ -7,7 +7,6 @@ import (
 
 	"github.com/matt-hoiland/glox/internal/literal"
 	"github.com/matt-hoiland/glox/internal/token"
-	"github.com/matt-hoiland/glox/internal/token/tokentype"
 )
 
 func TestToken_String(t *testing.T) {
@@ -17,22 +16,22 @@ func TestToken_String(t *testing.T) {
 		t.Parallel()
 
 		token := &token.Token{
-			Type:    tokentype.String,
+			Type:    token.TypeString,
 			Lexeme:  `"Hello, world!"`,
 			Literal: literal.String("Hello, world!"),
 		}
 
-		assert.Equal(t, `String "Hello, world!" 'Hello, world!'`, token.String())
+		assert.Equal(t, `TypeString "Hello, world!" 'Hello, world!'`, token.String())
 	})
 
 	t.Run("without literal", func(t *testing.T) {
 		t.Parallel()
 
 		token := &token.Token{
-			Type:   tokentype.And,
+			Type:   token.TypeAnd,
 			Lexeme: `and`,
 		}
 
-		assert.Equal(t, `And and`, token.String())
+		assert.Equal(t, `TypeAnd and`, token.String())
 	})
 }

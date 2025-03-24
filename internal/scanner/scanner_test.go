@@ -10,7 +10,6 @@ import (
 	"github.com/matt-hoiland/glox/internal/runes"
 	"github.com/matt-hoiland/glox/internal/scanner"
 	"github.com/matt-hoiland/glox/internal/token"
-	"github.com/matt-hoiland/glox/internal/token/tokentype"
 )
 
 func TestScanner_ScanTokens(t *testing.T) {
@@ -28,19 +27,19 @@ func TestScanner_ScanTokens(t *testing.T) {
 			Name:   "success/empty source",
 			Source: ``,
 			Tokens: []*token.Token{
-				{Type: tokentype.EOF},
+				{Type: token.TypeEOF},
 			},
 		},
 		{
 			Name:   "success/assign string to variable",
 			Source: `var language = "lox";`,
 			Tokens: []*token.Token{
-				{Type: tokentype.Var, Lexeme: `var`},
-				{Type: tokentype.Identifier, Lexeme: `language`},
-				{Type: tokentype.Equal, Lexeme: `=`},
-				{Type: tokentype.String, Lexeme: `"lox"`, Literal: literal.String([]runes.Rune("lox"))},
-				{Type: tokentype.Semicolon, Lexeme: `;`},
-				{Type: tokentype.EOF},
+				{Type: token.TypeVar, Lexeme: `var`},
+				{Type: token.TypeIdentifier, Lexeme: `language`},
+				{Type: token.TypeEqual, Lexeme: `=`},
+				{Type: token.TypeString, Lexeme: `"lox"`, Literal: literal.String([]runes.Rune("lox"))},
+				{Type: token.TypeSemicolon, Lexeme: `;`},
+				{Type: token.TypeEOF},
 			},
 		},
 		{
@@ -53,12 +52,12 @@ func TestScanner_ScanTokens(t *testing.T) {
 			Name:   "success/assign number to variable",
 			Source: `var pi = 873.32;`,
 			Tokens: []*token.Token{
-				{Type: tokentype.Var, Lexeme: `var`},
-				{Type: tokentype.Identifier, Lexeme: `pi`},
-				{Type: tokentype.Equal, Lexeme: `=`},
-				{Type: tokentype.Number, Lexeme: `873.32`, Literal: literal.Number(873.32)},
-				{Type: tokentype.Semicolon, Lexeme: `;`},
-				{Type: tokentype.EOF},
+				{Type: token.TypeVar, Lexeme: `var`},
+				{Type: token.TypeIdentifier, Lexeme: `pi`},
+				{Type: token.TypeEqual, Lexeme: `=`},
+				{Type: token.TypeNumber, Lexeme: `873.32`, Literal: literal.Number(873.32)},
+				{Type: token.TypeSemicolon, Lexeme: `;`},
+				{Type: token.TypeEOF},
 			},
 		},
 		{
@@ -66,42 +65,42 @@ func TestScanner_ScanTokens(t *testing.T) {
 			Source: `"First line
 			Second line"`,
 			Tokens: []*token.Token{
-				{Type: tokentype.String, Lexeme: `"First line
+				{Type: token.TypeString, Lexeme: `"First line
 			Second line"`, Literal: literal.String([]runes.Rune(`First line
 			Second line`)), Line: 1},
-				{Type: tokentype.EOF, Line: 1},
+				{Type: token.TypeEOF, Line: 1},
 			},
 		},
 		{
 			Name:   "success/single character punctuation",
 			Source: `(){}=;*+-/.,!`,
 			Tokens: []*token.Token{
-				{Type: tokentype.LeftParen, Lexeme: `(`},
-				{Type: tokentype.RightParen, Lexeme: `)`},
-				{Type: tokentype.LeftBrace, Lexeme: `{`},
-				{Type: tokentype.RightBrace, Lexeme: `}`},
-				{Type: tokentype.Equal, Lexeme: `=`},
-				{Type: tokentype.Semicolon, Lexeme: `;`},
-				{Type: tokentype.Star, Lexeme: `*`},
-				{Type: tokentype.Plus, Lexeme: `+`},
-				{Type: tokentype.Minus, Lexeme: `-`},
-				{Type: tokentype.Slash, Lexeme: `/`},
-				{Type: tokentype.Dot, Lexeme: `.`},
-				{Type: tokentype.Comma, Lexeme: `,`},
-				{Type: tokentype.Bang, Lexeme: `!`},
-				{Type: tokentype.EOF},
+				{Type: token.TypeLeftParen, Lexeme: `(`},
+				{Type: token.TypeRightParen, Lexeme: `)`},
+				{Type: token.TypeLeftBrace, Lexeme: `{`},
+				{Type: token.TypeRightBrace, Lexeme: `}`},
+				{Type: token.TypeEqual, Lexeme: `=`},
+				{Type: token.TypeSemicolon, Lexeme: `;`},
+				{Type: token.TypeStar, Lexeme: `*`},
+				{Type: token.TypePlus, Lexeme: `+`},
+				{Type: token.TypeMinus, Lexeme: `-`},
+				{Type: token.TypeSlash, Lexeme: `/`},
+				{Type: token.TypeDot, Lexeme: `.`},
+				{Type: token.TypeComma, Lexeme: `,`},
+				{Type: token.TypeBang, Lexeme: `!`},
+				{Type: token.TypeEOF},
 			},
 		},
 		{
 			Name:   "success/double character punctuation",
 			Source: `= <= >= == !=`,
 			Tokens: []*token.Token{
-				{Type: tokentype.Equal, Lexeme: `=`},
-				{Type: tokentype.LessEqual, Lexeme: `<=`},
-				{Type: tokentype.GreaterEqual, Lexeme: `>=`},
-				{Type: tokentype.EqualEqual, Lexeme: `==`},
-				{Type: tokentype.BangEqual, Lexeme: `!=`},
-				{Type: tokentype.EOF},
+				{Type: token.TypeEqual, Lexeme: `=`},
+				{Type: token.TypeLessEqual, Lexeme: `<=`},
+				{Type: token.TypeGreaterEqual, Lexeme: `>=`},
+				{Type: token.TypeEqualEqual, Lexeme: `==`},
+				{Type: token.TypeBangEqual, Lexeme: `!=`},
+				{Type: token.TypeEOF},
 			},
 		},
 		{
@@ -113,28 +112,28 @@ func TestScanner_ScanTokens(t *testing.T) {
 				}
 			`,
 			Tokens: []*token.Token{
-				{Type: tokentype.Fun, Lexeme: `fun`, Line: 2},
-				{Type: tokentype.Identifier, Lexeme: `add_two`, Line: 2},
-				{Type: tokentype.LeftParen, Lexeme: `(`, Line: 2},
-				{Type: tokentype.Identifier, Lexeme: `n`, Line: 2},
-				{Type: tokentype.RightParen, Lexeme: `)`, Line: 2},
-				{Type: tokentype.LeftBrace, Lexeme: `{`, Line: 2},
-				{Type: tokentype.Return, Lexeme: `return`, Line: 3},
-				{Type: tokentype.Identifier, Lexeme: `n`, Line: 3},
-				{Type: tokentype.Plus, Lexeme: `+`, Line: 3},
-				{Type: tokentype.Number, Lexeme: `2`, Literal: literal.Number(2), Line: 3},
-				{Type: tokentype.Semicolon, Lexeme: `;`, Line: 3},
-				{Type: tokentype.RightBrace, Lexeme: `}`, Line: 4},
-				{Type: tokentype.EOF, Line: 5},
+				{Type: token.TypeFun, Lexeme: `fun`, Line: 2},
+				{Type: token.TypeIdentifier, Lexeme: `add_two`, Line: 2},
+				{Type: token.TypeLeftParen, Lexeme: `(`, Line: 2},
+				{Type: token.TypeIdentifier, Lexeme: `n`, Line: 2},
+				{Type: token.TypeRightParen, Lexeme: `)`, Line: 2},
+				{Type: token.TypeLeftBrace, Lexeme: `{`, Line: 2},
+				{Type: token.TypeReturn, Lexeme: `return`, Line: 3},
+				{Type: token.TypeIdentifier, Lexeme: `n`, Line: 3},
+				{Type: token.TypePlus, Lexeme: `+`, Line: 3},
+				{Type: token.TypeNumber, Lexeme: `2`, Literal: literal.Number(2), Line: 3},
+				{Type: token.TypeSemicolon, Lexeme: `;`, Line: 3},
+				{Type: token.TypeRightBrace, Lexeme: `}`, Line: 4},
+				{Type: token.TypeEOF, Line: 5},
 			},
 		},
 		{
 			Name:   "success/number literal",
 			Source: `4.`,
 			Tokens: []*token.Token{
-				{Type: tokentype.Number, Lexeme: `4`, Literal: literal.Number(4)},
-				{Type: tokentype.Dot, Lexeme: `.`},
-				{Type: tokentype.EOF},
+				{Type: token.TypeNumber, Lexeme: `4`, Literal: literal.Number(4)},
+				{Type: token.TypeDot, Lexeme: `.`},
+				{Type: token.TypeEOF},
 			},
 		},
 		{

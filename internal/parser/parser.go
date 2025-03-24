@@ -7,7 +7,6 @@ import (
 	"github.com/matt-hoiland/glox/internal/expr"
 	"github.com/matt-hoiland/glox/internal/literal"
 	"github.com/matt-hoiland/glox/internal/token"
-	"github.com/matt-hoiland/glox/internal/token/tokentype"
 )
 
 var (
@@ -46,14 +45,14 @@ func (p *Parser) advance() *token.Token {
 
 // check returns true if the current token is of the given type.
 // Unlike [Parser.match], it never consumes the token, it only looks at it.
-func (p *Parser) check(tokenType tokentype.TokenType) bool {
+func (p *Parser) check(tokenType token.Type) bool {
 	if p.isAtEnd() {
 		return false
 	}
 	return p.peek().Type == tokenType
 }
 
-func (p *Parser) consume(tokenType tokentype.TokenType, err error) (*token.Token, error) {
+func (p *Parser) consume(tokenType token.Type, err error) (*token.Token, error) {
 	if p.check(tokenType) {
 		return p.advance(), nil
 	}
@@ -70,13 +69,13 @@ func (p *Parser) error(token *token.Token, err error) error {
 
 // isAtEnd checks if we’ve run out of tokens to parse.
 func (p *Parser) isAtEnd() bool {
-	return p.peek().Type == tokentype.EOF
+	return p.peek().Type == token.TypeEOF
 }
 
 // match checks to see if the current token has string of the given types.
 // If so, it consumes the token and returns true.
 // Otherwise, it returns false and leaves the current token alone.
-func (p *Parser) match(tokenTypes ...tokentype.TokenType) bool {
+func (p *Parser) match(tokenTypes ...token.Type) bool {
 	for _, tokenType := range tokenTypes {
 		if p.check(tokenType) {
 			p.advance()
@@ -116,7 +115,7 @@ func (p *Parser) equality() (expr.Expr[string], error) {
 		return nil, err
 	}
 
-	for p.match(tokentype.BangEqual, tokentype.EqualEqual) {
+	for p.match(token.TypeBangEqual, token.TypeEqualEqual) {
 		operator := p.previous()
 		right, err := p.comparison()
 		if err != nil {
@@ -137,7 +136,7 @@ func (p *Parser) comparison() (expr.Expr[string], error) {
 		return nil, err
 	}
 
-	for p.match(tokentype.Greater, tokentype.GreaterEqual, tokentype.Less, tokentype.LessEqual) {
+	for p.match(token.TypeGreater, token.TypeGreaterEqual, token.TypeLess, token.TypeLessEqual) {
 		operator := p.previous()
 		right, err := p.term()
 		if err != nil {
@@ -158,7 +157,7 @@ func (p *Parser) term() (expr.Expr[string], error) {
 		return nil, err
 	}
 
-	for p.match(tokentype.Minus, tokentype.Plus) {
+	for p.match(token.TypeMinus, token.TypePlus) {
 		operator := p.previous()
 		right, err := p.factor()
 		if err != nil {
@@ -179,7 +178,7 @@ func (p *Parser) factor() (expr.Expr[string], error) {
 		return nil, err
 	}
 
-	for p.match(tokentype.Slash, tokentype.Star) {
+	for p.match(token.TypeSlash, token.TypeStar) {
 		operator := p.previous()
 		right, err := p.factor()
 		if err != nil {
@@ -196,7 +195,7 @@ func (p *Parser) factor() (expr.Expr[string], error) {
 //	 unary -> ( "!" | "-" ) unary
 //		    | primary ;
 func (p *Parser) unary() (expr.Expr[string], error) {
-	if p.match(tokentype.Bang, tokentype.Minus) {
+	if p.match(token.TypeBang, token.TypeMinus) {
 		operator := p.previous()
 		right, err := p.unary()
 		if err != nil {
@@ -213,24 +212,24 @@ func (p *Parser) unary() (expr.Expr[string], error) {
 //	 primary -> NUMBER | STRING | "true" | "false" | "nil"
 //		      | "(" expression ")" ;
 func (p *Parser) primary() (expr.Expr[string], error) {
-	if p.match(tokentype.False) {
+	if p.match(token.TypeFalse) {
 		return expr.NewLiteral[string](literal.Boolean(false)), nil
 	}
-	if p.match(tokentype.True) {
+	if p.match(token.TypeTrue) {
 		return expr.NewLiteral[string](literal.Boolean(true)), nil
 	}
-	if p.match(tokentype.Nil) {
+	if p.match(token.TypeNil) {
 		return expr.NewLiteral[string](literal.Nil{}), nil
 	}
-	if p.match(tokentype.Number, tokentype.String) {
+	if p.match(token.TypeNumber, token.TypeString) {
 		return expr.NewLiteral[string](p.previous().Literal), nil
 	}
-	if p.match(tokentype.LeftParen) {
+	if p.match(token.TypeLeftParen) {
 		expression, err := p.expression()
 		if err != nil {
 			return nil, err
 		}
-		if _, err := p.consume(tokentype.RightParen, ErrUnterminatedExpression); err != nil {
+		if _, err := p.consume(token.TypeRightParen, ErrUnterminatedExpression); err != nil {
 			return nil, err
 		}
 		return expr.NewGrouping(expression), nil

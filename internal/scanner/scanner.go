@@ -7,7 +7,6 @@ import (
 	"github.com/matt-hoiland/glox/internal/literal"
 	"github.com/matt-hoiland/glox/internal/runes"
 	"github.com/matt-hoiland/glox/internal/token"
-	"github.com/matt-hoiland/glox/internal/token/tokentype"
 )
 
 var (
@@ -39,7 +38,7 @@ func (s *Scanner) ScanTokens() ([]*token.Token, error) {
 	}
 
 	s.tokens = append(s.tokens, &token.Token{
-		Type:    tokentype.EOF,
+		Type:    token.TypeEOF,
 		Lexeme:  "",
 		Literal: nil,
 		Line:    s.line,
@@ -61,7 +60,7 @@ func (s *Scanner) emitIdentifier() *token.Token {
 	text := string(s.source[s.start:s.current])
 	tokenType, ok := keywords[text]
 	if !ok {
-		tokenType = tokentype.Identifier
+		tokenType = token.TypeIdentifier
 	}
 	return s.emitToken(tokenType)
 }
@@ -82,7 +81,7 @@ func (s *Scanner) emitNumber() *token.Token {
 	}
 	number := literal.ParseNumber(s.source[s.start:s.current])
 
-	return s.emitToken(tokentype.Number, number)
+	return s.emitToken(token.TypeNumber, number)
 }
 
 func (s *Scanner) emitString() (*token.Token, error) {
@@ -99,10 +98,10 @@ func (s *Scanner) emitString() (*token.Token, error) {
 
 	s.advance()
 	value := literal.String(s.source[s.start+1 : s.current-1])
-	return s.emitToken(tokentype.String, value), nil
+	return s.emitToken(token.TypeString, value), nil
 }
 
-func (s *Scanner) emitToken(tokenType tokentype.TokenType, literal ...token.Literal) *token.Token {
+func (s *Scanner) emitToken(tokenType token.Type, literal ...token.Literal) *token.Token {
 	token := &token.Token{
 		Type:   tokenType,
 		Lexeme: string(s.source[s.start:s.current]),
@@ -129,7 +128,7 @@ func (s *Scanner) match(expected runes.Rune) bool {
 	return true
 }
 
-func (s *Scanner) matchTernary(expected runes.Rune, t, f tokentype.TokenType) tokentype.TokenType {
+func (s *Scanner) matchTernary(expected runes.Rune, t, f token.Type) token.Type {
 	if s.match(expected) {
 		return t
 	}
@@ -152,40 +151,40 @@ func (s *Scanner) peekNext() runes.Rune {
 
 func (s *Scanner) scanToken() error {
 	var (
-		r     runes.Rune
-		token *token.Token
-		err   error
+		r   runes.Rune
+		tok *token.Token
+		err error
 	)
 
 	switch r = s.advance(); r {
 	case '(':
-		token = s.emitToken(tokentype.LeftParen)
+		tok = s.emitToken(token.TypeLeftParen)
 	case ')':
-		token = s.emitToken(tokentype.RightParen)
+		tok = s.emitToken(token.TypeRightParen)
 	case '{':
-		token = s.emitToken(tokentype.LeftBrace)
+		tok = s.emitToken(token.TypeLeftBrace)
 	case '}':
-		token = s.emitToken(tokentype.RightBrace)
+		tok = s.emitToken(token.TypeRightBrace)
 	case ',':
-		token = s.emitToken(tokentype.Comma)
+		tok = s.emitToken(token.TypeComma)
 	case '.':
-		token = s.emitToken(tokentype.Dot)
+		tok = s.emitToken(token.TypeDot)
 	case '-':
-		token = s.emitToken(tokentype.Minus)
+		tok = s.emitToken(token.TypeMinus)
 	case '+':
-		token = s.emitToken(tokentype.Plus)
+		tok = s.emitToken(token.TypePlus)
 	case ';':
-		token = s.emitToken(tokentype.Semicolon)
+		tok = s.emitToken(token.TypeSemicolon)
 	case '*':
-		token = s.emitToken(tokentype.Star)
+		tok = s.emitToken(token.TypeStar)
 	case '!':
-		token = s.emitToken(s.matchTernary('=', tokentype.BangEqual, tokentype.Bang))
+		tok = s.emitToken(s.matchTernary('=', token.TypeBangEqual, token.TypeBang))
 	case '=':
-		token = s.emitToken(s.matchTernary('=', tokentype.EqualEqual, tokentype.Equal))
+		tok = s.emitToken(s.matchTernary('=', token.TypeEqualEqual, token.TypeEqual))
 	case '<':
-		token = s.emitToken(s.matchTernary('=', tokentype.LessEqual, tokentype.Less))
+		tok = s.emitToken(s.matchTernary('=', token.TypeLessEqual, token.TypeLess))
 	case '>':
-		token = s.emitToken(s.matchTernary('=', tokentype.GreaterEqual, tokentype.Greater))
+		tok = s.emitToken(s.matchTernary('=', token.TypeGreaterEqual, token.TypeGreater))
 	case '/':
 		if s.match('/') {
 			// A comment goes until the end of the line.
@@ -193,7 +192,7 @@ func (s *Scanner) scanToken() error {
 				s.advance()
 			}
 		} else {
-			token = s.emitToken(tokentype.Slash)
+			tok = s.emitToken(token.TypeSlash)
 		}
 	case ' ', '\r', '\t':
 		// Ignore whitespace.
@@ -201,20 +200,20 @@ func (s *Scanner) scanToken() error {
 	case '\n':
 		s.line++
 	case '"':
-		if token, err = s.emitString(); err != nil {
+		if tok, err = s.emitString(); err != nil {
 			return err
 		}
 	default:
 		if r.IsDigit() {
-			token = s.emitNumber()
+			tok = s.emitNumber()
 		} else if r.IsAlpha() {
-			token = s.emitIdentifier()
+			tok = s.emitIdentifier()
 		} else {
 			return &ierrors.Error{Line: s.line, Err: ErrUnexpectedRune}
 		}
 	}
-	if token != nil {
-		s.tokens = append(s.tokens, token)
+	if tok != nil {
+		s.tokens = append(s.tokens, tok)
 	}
 	return nil
 }
