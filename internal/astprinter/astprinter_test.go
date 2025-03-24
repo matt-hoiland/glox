@@ -1,8 +1,9 @@
-package expr_test
+package astprinter_test
 
 import (
 	"fmt"
 
+	"github.com/matt-hoiland/glox/internal/astprinter"
 	"github.com/matt-hoiland/glox/internal/expr"
 	"github.com/matt-hoiland/glox/internal/loxtype"
 	"github.com/matt-hoiland/glox/internal/token"
@@ -20,7 +21,7 @@ func ExampleASTPrinter() {
 		),
 	)
 
-	var printer expr.ASTPrinter
-	fmt.Println(printer.Print(expression))
+	var p astprinter.ASTPrinter
+	fmt.Println(p.Print(expression))
 	// Output: (* (- 123) (group nil))
 }

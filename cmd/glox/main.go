@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/matt-hoiland/glox/internal/astprinter"
 	"github.com/matt-hoiland/glox/internal/constants/exit"
 	"github.com/matt-hoiland/glox/internal/expr"
 	"github.com/matt-hoiland/glox/internal/parser"
@@ -45,7 +46,7 @@ func run(code string) error {
 		return err
 	}
 
-	fmt.Println(expr.ASTPrinter{}.Print(ast))
+	fmt.Println(astprinter.Print(ast))
 	return nil
 }
 
