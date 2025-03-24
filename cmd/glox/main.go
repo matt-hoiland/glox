@@ -6,7 +6,10 @@ import (
 	"os"
 
 	"github.com/matt-hoiland/glox/internal/constants/exit"
+	"github.com/matt-hoiland/glox/internal/expr"
+	"github.com/matt-hoiland/glox/internal/parser"
 	"github.com/matt-hoiland/glox/internal/scanner"
+	"github.com/matt-hoiland/glox/internal/token"
 )
 
 func main() {
@@ -28,14 +31,21 @@ func main() {
 }
 
 func run(code string) error {
-	scanner := scanner.New(code)
-	tokens, err := scanner.ScanTokens()
-	if err != nil {
+	var (
+		tokens []*token.Token
+		ast    expr.Expr[string]
+		err    error
+	)
+
+	if tokens, err = scanner.New(code).ScanTokens(); err != nil {
 		return err
 	}
-	for _, token := range tokens {
-		fmt.Println(token.String())
+
+	if ast, err = parser.New(tokens).Parse(); err != nil {
+		return err
 	}
+
+	fmt.Println(expr.ASTPrinter{}.Print(ast))
 	return nil
 }
 

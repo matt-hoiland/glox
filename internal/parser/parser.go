@@ -95,6 +95,31 @@ func (p *Parser) previous() *token.Token {
 	return p.Tokens[p.Current-1]
 }
 
+//nolint:unused // This will be used in a future chapter.
+func (p *Parser) synchronize() {
+	p.advance()
+
+	for !p.isAtEnd() {
+		if p.previous().Type == token.TypeSemicolon {
+			return
+		}
+
+		switch p.peek().Type {
+		case token.TypeClass,
+			token.TypeFun,
+			token.TypeVar,
+			token.TypeFor,
+			token.TypeIf,
+			token.TypeWhile,
+			token.TypePrint,
+			token.TypeReturn:
+			return
+		}
+
+		p.advance()
+	}
+}
+
 //----------------------------------------------------------------------------
 // Grammar production methods.
 //----------------------------------------------------------------------------
