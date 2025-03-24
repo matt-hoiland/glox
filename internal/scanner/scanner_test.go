@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/matt-hoiland/glox/internal/literal"
+	"github.com/matt-hoiland/glox/internal/loxtype"
 	"github.com/matt-hoiland/glox/internal/runes"
 	"github.com/matt-hoiland/glox/internal/scanner"
 	"github.com/matt-hoiland/glox/internal/token"
@@ -37,7 +37,7 @@ func TestScanner_ScanTokens(t *testing.T) {
 				{Type: token.TypeVar, Lexeme: `var`},
 				{Type: token.TypeIdentifier, Lexeme: `language`},
 				{Type: token.TypeEqual, Lexeme: `=`},
-				{Type: token.TypeString, Lexeme: `"lox"`, Literal: literal.String([]runes.Rune("lox"))},
+				{Type: token.TypeString, Lexeme: `"lox"`, Literal: loxtype.String([]runes.Rune("lox"))},
 				{Type: token.TypeSemicolon, Lexeme: `;`},
 				{Type: token.TypeEOF},
 			},
@@ -55,7 +55,7 @@ func TestScanner_ScanTokens(t *testing.T) {
 				{Type: token.TypeVar, Lexeme: `var`},
 				{Type: token.TypeIdentifier, Lexeme: `pi`},
 				{Type: token.TypeEqual, Lexeme: `=`},
-				{Type: token.TypeNumber, Lexeme: `873.32`, Literal: literal.Number(873.32)},
+				{Type: token.TypeNumber, Lexeme: `873.32`, Literal: loxtype.Number(873.32)},
 				{Type: token.TypeSemicolon, Lexeme: `;`},
 				{Type: token.TypeEOF},
 			},
@@ -66,7 +66,7 @@ func TestScanner_ScanTokens(t *testing.T) {
 			Second line"`,
 			Tokens: []*token.Token{
 				{Type: token.TypeString, Lexeme: `"First line
-			Second line"`, Literal: literal.String([]runes.Rune(`First line
+			Second line"`, Literal: loxtype.String([]runes.Rune(`First line
 			Second line`)), Line: 1},
 				{Type: token.TypeEOF, Line: 1},
 			},
@@ -121,7 +121,7 @@ func TestScanner_ScanTokens(t *testing.T) {
 				{Type: token.TypeReturn, Lexeme: `return`, Line: 3},
 				{Type: token.TypeIdentifier, Lexeme: `n`, Line: 3},
 				{Type: token.TypePlus, Lexeme: `+`, Line: 3},
-				{Type: token.TypeNumber, Lexeme: `2`, Literal: literal.Number(2), Line: 3},
+				{Type: token.TypeNumber, Lexeme: `2`, Literal: loxtype.Number(2), Line: 3},
 				{Type: token.TypeSemicolon, Lexeme: `;`, Line: 3},
 				{Type: token.TypeRightBrace, Lexeme: `}`, Line: 4},
 				{Type: token.TypeEOF, Line: 5},
@@ -131,7 +131,7 @@ func TestScanner_ScanTokens(t *testing.T) {
 			Name:   "success/number literal",
 			Source: `4.`,
 			Tokens: []*token.Token{
-				{Type: token.TypeNumber, Lexeme: `4`, Literal: literal.Number(4)},
+				{Type: token.TypeNumber, Lexeme: `4`, Literal: loxtype.Number(4)},
 				{Type: token.TypeDot, Lexeme: `.`},
 				{Type: token.TypeEOF},
 			},

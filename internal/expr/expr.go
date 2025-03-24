@@ -2,17 +2,12 @@
 package expr
 
 import (
-	"fmt"
-
+	"github.com/matt-hoiland/glox/internal/loxtype"
 	"github.com/matt-hoiland/glox/internal/token"
 )
 
 type Expr[R any] interface {
 	Accept(Visitor[R]) R
-}
-
-type Value interface {
-	fmt.Stringer
 }
 
 type Visitor[R any] interface {
@@ -59,12 +54,12 @@ func (e *Grouping[R]) Accept(visitor Visitor[R]) R {
 }
 
 type Literal[R any] struct {
-	Value Value
+	Value loxtype.Type
 }
 
 var _ Expr[any] = (*Literal[any])(nil)
 
-func NewLiteral[R any](Value Value) *Literal[R] {
+func NewLiteral[R any](Value loxtype.Type) *Literal[R] {
 	return &Literal[R]{
 		Value: Value,
 	}

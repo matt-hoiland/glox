@@ -1,4 +1,4 @@
-package literal
+package loxtype
 
 import (
 	"fmt"
@@ -7,9 +7,13 @@ import (
 	"github.com/matt-hoiland/glox/internal/runes"
 )
 
+type Type interface {
+	fmt.Stringer
+}
+
 type Boolean bool
 
-var _ fmt.Stringer = Boolean(false)
+var _ Type = Boolean(false)
 
 func (b Boolean) String() string {
 	if b {
@@ -20,7 +24,7 @@ func (b Boolean) String() string {
 
 type Nil struct{}
 
-var _ fmt.Stringer = Nil{}
+var _ Type = Nil{}
 
 func (n Nil) String() string {
 	return "nil"
@@ -28,7 +32,7 @@ func (n Nil) String() string {
 
 type Number float64
 
-var _ fmt.Stringer = Number(0)
+var _ Type = Number(0)
 
 func ParseNumber(text []runes.Rune) Number {
 	f64, err := strconv.ParseFloat(string(text), 64)
@@ -44,7 +48,7 @@ func (n Number) String() string {
 
 type String string
 
-var _ fmt.Stringer = String("")
+var _ Type = String("")
 
 func (s String) String() string {
 	return string(s)

@@ -21,7 +21,7 @@ func main() {
 	defineAST(outputDir, "Expr",
 		"Binary   : Left Expr[R], Operator *token.Token, Right Expr[R]",
 		"Grouping : Expression Expr[R]",
-		"Literal  : Value Value",
+		"Literal  : Value loxtype.Type",
 		"Unary    : Operator *token.Token, Right Expr[R]",
 	)
 }
@@ -33,18 +33,13 @@ func defineAST(outputDir, baseName string, productions ...string) {
 	fmt.Fprintln(w, "package expr")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "import (")
-	fmt.Fprintln(w, `	"fmt"`)
-	fmt.Fprintln(w)
+	fmt.Fprintln(w, `	"github.com/matt-hoiland/glox/internal/loxtype"`)
 	fmt.Fprintln(w, `	"github.com/matt-hoiland/glox/internal/token"`)
 	fmt.Fprintln(w, ")")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "type "+baseName+"[R any] interface {")
 	fmt.Fprintln(w, `	Accept(Visitor[R]) R`)
 	fmt.Fprintln(w, "}")
-	fmt.Fprintln(w)
-	fmt.Fprintln(w, `type Value interface {`)
-	fmt.Fprintln(w, `	fmt.Stringer`)
-	fmt.Fprintln(w, `}`)
 	fmt.Fprintln(w)
 	defineVisitor(w, baseName, productions...)
 	fmt.Fprintln(w)

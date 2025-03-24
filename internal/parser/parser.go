@@ -5,7 +5,7 @@ import (
 
 	ierrors "github.com/matt-hoiland/glox/internal/errors"
 	"github.com/matt-hoiland/glox/internal/expr"
-	"github.com/matt-hoiland/glox/internal/literal"
+	"github.com/matt-hoiland/glox/internal/loxtype"
 	"github.com/matt-hoiland/glox/internal/token"
 )
 
@@ -238,13 +238,13 @@ func (p *Parser) unary() (expr.Expr[string], error) {
 //		      | "(" expression ")" ;
 func (p *Parser) primary() (expr.Expr[string], error) {
 	if p.match(token.TypeFalse) {
-		return expr.NewLiteral[string](literal.Boolean(false)), nil
+		return expr.NewLiteral[string](loxtype.Boolean(false)), nil
 	}
 	if p.match(token.TypeTrue) {
-		return expr.NewLiteral[string](literal.Boolean(true)), nil
+		return expr.NewLiteral[string](loxtype.Boolean(true)), nil
 	}
 	if p.match(token.TypeNil) {
-		return expr.NewLiteral[string](literal.Nil{}), nil
+		return expr.NewLiteral[string](loxtype.Nil{}), nil
 	}
 	if p.match(token.TypeNumber, token.TypeString) {
 		return expr.NewLiteral[string](p.previous().Literal), nil

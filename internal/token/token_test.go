@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/matt-hoiland/glox/internal/literal"
+	"github.com/matt-hoiland/glox/internal/loxtype"
 	"github.com/matt-hoiland/glox/internal/token"
 )
 
@@ -18,7 +18,7 @@ func TestToken_String(t *testing.T) {
 		token := &token.Token{
 			Type:    token.TypeString,
 			Lexeme:  `"Hello, world!"`,
-			Literal: literal.String("Hello, world!"),
+			Literal: loxtype.String("Hello, world!"),
 		}
 
 		assert.Equal(t, `TypeString "Hello, world!" 'Hello, world!'`, token.String())

@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	ierrors "github.com/matt-hoiland/glox/internal/errors"
-	"github.com/matt-hoiland/glox/internal/literal"
+	"github.com/matt-hoiland/glox/internal/loxtype"
 	"github.com/matt-hoiland/glox/internal/runes"
 	"github.com/matt-hoiland/glox/internal/token"
 )
@@ -79,7 +79,7 @@ func (s *Scanner) emitNumber() *token.Token {
 			s.advance()
 		}
 	}
-	number := literal.ParseNumber(s.source[s.start:s.current])
+	number := loxtype.ParseNumber(s.source[s.start:s.current])
 
 	return s.emitToken(token.TypeNumber, number)
 }
@@ -97,7 +97,7 @@ func (s *Scanner) emitString() (*token.Token, error) {
 	}
 
 	s.advance()
-	value := literal.String(s.source[s.start+1 : s.current-1])
+	value := loxtype.String(s.source[s.start+1 : s.current-1])
 	return s.emitToken(token.TypeString, value), nil
 }
 
