@@ -38,7 +38,7 @@ func defineAST(outputDir, baseName string, productions ...string) {
 	fmt.Fprintln(w, ")")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "type "+baseName+" interface {")
-	fmt.Fprintln(w, `	Accept(Visitor) loxtype.Type`)
+	fmt.Fprintln(w, `	Accept(Visitor) (loxtype.Type, error)`)
 	fmt.Fprintln(w, "}")
 	fmt.Fprintln(w)
 	defineVisitor(w, baseName, productions...)
@@ -81,7 +81,7 @@ func defineType(w io.Writer, baseName, typeName, fieldList string) {
 	fmt.Fprintln(w, "\t}")
 	fmt.Fprintln(w, "}")
 	fmt.Fprintln(w)
-	fmt.Fprintf(w, "func (e *%s) Accept(visitor Visitor) loxtype.Type {\n", typeName)
+	fmt.Fprintf(w, "func (e *%s) Accept(visitor Visitor) (loxtype.Type, error) {\n", typeName)
 	fmt.Fprintf(w, "\treturn visitor.Visit%s(e)\n", typeName)
 	fmt.Fprintln(w, "}")
 	fmt.Fprintln(w)
@@ -91,7 +91,7 @@ func defineVisitor(w io.Writer, _ string, productions ...string) {
 	fmt.Fprintln(w, `type Visitor interface {`)
 	for _, production := range productions {
 		typeName := strings.TrimSpace(strings.Split(production, ":")[0])
-		fmt.Fprintf(w, "\tVisit%s(*%s) loxtype.Type\n", typeName, typeName)
+		fmt.Fprintf(w, "\tVisit%s(*%s) (loxtype.Type, error)\n", typeName, typeName)
 	}
 	fmt.Fprintln(w, `}`)
 }

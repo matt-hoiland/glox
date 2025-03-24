@@ -7,14 +7,14 @@ import (
 )
 
 type Expr interface {
-	Accept(Visitor) loxtype.Type
+	Accept(Visitor) (loxtype.Type, error)
 }
 
 type Visitor interface {
-	VisitBinary(*Binary) loxtype.Type
-	VisitGrouping(*Grouping) loxtype.Type
-	VisitLiteral(*Literal) loxtype.Type
-	VisitUnary(*Unary) loxtype.Type
+	VisitBinary(*Binary) (loxtype.Type, error)
+	VisitGrouping(*Grouping) (loxtype.Type, error)
+	VisitLiteral(*Literal) (loxtype.Type, error)
+	VisitUnary(*Unary) (loxtype.Type, error)
 }
 
 type Binary struct {
@@ -33,7 +33,7 @@ func NewBinary(Left Expr, Operator *token.Token, Right Expr) *Binary {
 	}
 }
 
-func (e *Binary) Accept(visitor Visitor) loxtype.Type {
+func (e *Binary) Accept(visitor Visitor) (loxtype.Type, error) {
 	return visitor.VisitBinary(e)
 }
 
@@ -49,7 +49,7 @@ func NewGrouping(Expression Expr) *Grouping {
 	}
 }
 
-func (e *Grouping) Accept(visitor Visitor) loxtype.Type {
+func (e *Grouping) Accept(visitor Visitor) (loxtype.Type, error) {
 	return visitor.VisitGrouping(e)
 }
 
@@ -65,7 +65,7 @@ func NewLiteral(Value loxtype.Type) *Literal {
 	}
 }
 
-func (e *Literal) Accept(visitor Visitor) loxtype.Type {
+func (e *Literal) Accept(visitor Visitor) (loxtype.Type, error) {
 	return visitor.VisitLiteral(e)
 }
 
@@ -83,6 +83,6 @@ func NewUnary(Operator *token.Token, Right Expr) *Unary {
 	}
 }
 
-func (e *Unary) Accept(visitor Visitor) loxtype.Type {
+func (e *Unary) Accept(visitor Visitor) (loxtype.Type, error) {
 	return visitor.VisitUnary(e)
 }

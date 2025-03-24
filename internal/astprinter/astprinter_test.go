@@ -22,6 +22,7 @@ func ExampleASTPrinter() {
 	)
 
 	var p astprinter.ASTPrinter
-	fmt.Println(p.Print(expression))
+	s, _ := p.Print(expression)
+	fmt.Println(s)
 	// Output: (* (- 123) (group nil))
 }
