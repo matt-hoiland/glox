@@ -24,6 +24,10 @@ func main() {
 		"Literal  : Value loxtype.Type",
 		"Unary    : Operator *token.Token, Right Expr",
 	)
+	defineAST(outputDir, "Stmt",
+		"Expression : Expression Expr",
+		"Print      : Expression Expr",
+	)
 }
 
 func defineAST(outputDir, baseName string, productions ...string) {
