@@ -1,3 +1,3 @@
 package glox
 
-//go:generate go run ./tools/generate-ast internal/expr
+//go:generate go run ./tools/generate-ast internal/ast/

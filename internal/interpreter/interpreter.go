@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/matt-hoiland/glox/internal/expr"
+	"github.com/matt-hoiland/glox/internal/ast"
 	"github.com/matt-hoiland/glox/internal/loxtype"
 	"github.com/matt-hoiland/glox/internal/token"
 )
@@ -20,17 +20,17 @@ var (
 
 type Interpreter struct{}
 
-var _ expr.Visitor = (*Interpreter)(nil)
+var _ ast.ExprVisitor = (*Interpreter)(nil)
 
 func New() *Interpreter {
 	return &Interpreter{}
 }
 
-func (i *Interpreter) Evaluate(e expr.Expr) (loxtype.Type, error) {
+func (i *Interpreter) Evaluate(e ast.Expr) (loxtype.Type, error) {
 	return i.evaluate(e)
 }
 
-func (i *Interpreter) evaluate(e expr.Expr) (loxtype.Type, error) {
+func (i *Interpreter) evaluate(e ast.Expr) (loxtype.Type, error) {
 	return e.Accept(i)
 }
 
@@ -61,7 +61,7 @@ func (i *Interpreter) isTruthy(value loxtype.Type) loxtype.Boolean {
 	return true
 }
 
-func (i *Interpreter) VisitBinary(e *expr.Binary) (loxtype.Type, error) {
+func (i *Interpreter) VisitBinaryExpr(e *ast.BinaryExpr) (loxtype.Type, error) {
 	left, err := i.evaluate(e.Left)
 	if err != nil {
 		return nil, fmt.Errorf("could not evaluate left operand of binary expression: %w", err)
@@ -133,15 +133,15 @@ func (i *Interpreter) VisitBinary(e *expr.Binary) (loxtype.Type, error) {
 	return nil, ErrUnimplemented
 }
 
-func (i *Interpreter) VisitGrouping(e *expr.Grouping) (loxtype.Type, error) {
+func (i *Interpreter) VisitGroupingExpr(e *ast.GroupingExpr) (loxtype.Type, error) {
 	return i.evaluate(e.Expression)
 }
 
-func (i *Interpreter) VisitLiteral(e *expr.Literal) (loxtype.Type, error) {
+func (i *Interpreter) VisitLiteralExpr(e *ast.LiteralExpr) (loxtype.Type, error) {
 	return e.Value, nil
 }
 
-func (i *Interpreter) VisitUnary(e *expr.Unary) (loxtype.Type, error) {
+func (i *Interpreter) VisitUnaryExpr(e *ast.UnaryExpr) (loxtype.Type, error) {
 	right, err := i.evaluate(e.Right)
 	if err != nil {
 		return nil, fmt.Errorf("could not evaluate operand of unary expression: %w", err)

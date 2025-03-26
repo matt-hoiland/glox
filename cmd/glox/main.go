@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/matt-hoiland/glox/internal/ast"
 	"github.com/matt-hoiland/glox/internal/constants/exit"
-	"github.com/matt-hoiland/glox/internal/expr"
 	"github.com/matt-hoiland/glox/internal/interpreter"
 	"github.com/matt-hoiland/glox/internal/parser"
 	"github.com/matt-hoiland/glox/internal/scanner"
@@ -34,7 +34,7 @@ func main() {
 func run(code string) error {
 	var (
 		tokens []*token.Token
-		ast    expr.Expr
+		ast    ast.Expr
 		err    error
 	)
 
