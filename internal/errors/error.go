@@ -12,6 +12,11 @@ type Error struct {
 	Err   error
 }
 
+var (
+	_ error                       = (*Error)(nil)
+	_ interface{ Unwrap() error } = (*Error)(nil)
+)
+
 func New(tok *token.Token, err error) *Error {
 	e := &Error{
 		Line:  tok.Line,

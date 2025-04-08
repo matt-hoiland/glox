@@ -29,12 +29,12 @@ func TestInterpreter_Evaluate(t *testing.T) {
 		},
 		{
 			Name:          "error/negate_string",
-			Source:        `-"Hello"`,
+			Source:        `-"Hello";`,
 			ExpectedError: interpreter.ErrNonNumericType,
 		},
 		{
 			Name:          "success/truthiness/nil_is_falsey",
-			Source:        `!nil`,
+			Source:        `!nil;`,
 			ExpectedValue: loxtype.Boolean(true),
 		},
 	}

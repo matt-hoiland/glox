@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/matt-hoiland/glox/internal/ast"
-	ierrors "github.com/matt-hoiland/glox/internal/errors"
+	"github.com/matt-hoiland/glox/internal/environment"
 	"github.com/matt-hoiland/glox/internal/loxtype"
 	"github.com/matt-hoiland/glox/internal/parser"
 	"github.com/matt-hoiland/glox/internal/scanner"
@@ -19,46 +19,10 @@ var (
 	ErrNonBooleanType = fmt.Errorf("non-boolean %w", ErrType)
 	ErrNonNumericType = fmt.Errorf("non-numeric %w", ErrType)
 	ErrNonStringType  = fmt.Errorf("non-string %w", ErrType)
-
-	ErrUndefinedVariable = errors.New("undefined variable")
 )
 
-type UndefinedVariableError struct {
-	token *token.Token
-}
-
-func newUndefinedVariableError(token *token.Token) *UndefinedVariableError {
-	return &UndefinedVariableError{token: token}
-}
-
-func (e *UndefinedVariableError) Error() string {
-	return fmt.Sprintf("undefined variable: %s", e.token.Lexeme)
-}
-
-type environment map[string]loxtype.Type
-
-func (e environment) assign(name *token.Token, value loxtype.Type) error {
-	if _, ok := e[name.Lexeme]; !ok {
-		return ierrors.New(name, newUndefinedVariableError(name))
-	}
-	e[name.Lexeme] = value
-	return nil
-}
-
-func (e environment) define(name *token.Token, value loxtype.Type) {
-	e[name.Lexeme] = value
-}
-
-func (e environment) get(name *token.Token) (loxtype.Type, error) {
-	value, ok := e[name.Lexeme]
-	if !ok {
-		return nil, ierrors.New(name, fmt.Errorf("%w: %s", ErrUndefinedVariable, name.Lexeme))
-	}
-	return value, nil
-}
-
 type Interpreter struct {
-	environment environment
+	environment *environment.Environment
 }
 
 var (
@@ -68,7 +32,7 @@ var (
 
 func New() *Interpreter {
 	return &Interpreter{
-		environment: environment{},
+		environment: environment.New(),
 	}
 }
 
@@ -168,7 +132,7 @@ func (i *Interpreter) VisitVarStmt(s *ast.VarStmt) (loxtype.Type, error) {
 		}
 	}
 
-	i.environment.define(s.Name, value)
+	i.environment.Define(s.Name, value)
 	return nil, nil
 }
 
@@ -177,7 +141,7 @@ func (i *Interpreter) VisitAssignExpr(e *ast.AssignExpr) (loxtype.Type, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err = i.environment.assign(e.Name, value); err != nil {
+	if err = i.environment.Assign(e.Name, value); err != nil {
 		return nil, err
 	}
 	return value, nil
@@ -284,7 +248,7 @@ func (i *Interpreter) VisitUnaryExpr(e *ast.UnaryExpr) (loxtype.Type, error) {
 }
 
 func (i *Interpreter) VisitVariableExpr(e *ast.VariableExpr) (loxtype.Type, error) {
-	return i.environment.get(e.Name)
+	return i.environment.Get(e.Name)
 }
 
 func convertBoth[T any](a, b loxtype.Type, err error) (T, T, error) {
