@@ -11,9 +11,26 @@ type Stmt interface {
 }
 
 type StmtVisitor interface {
+	VisitBlockStmt(*BlockStmt) (loxtype.Type, error)
 	VisitExpressionStmt(*ExpressionStmt) (loxtype.Type, error)
 	VisitPrintStmt(*PrintStmt) (loxtype.Type, error)
 	VisitVarStmt(*VarStmt) (loxtype.Type, error)
+}
+
+type BlockStmt struct {
+	Statements []Stmt
+}
+
+var _ Stmt = (*BlockStmt)(nil)
+
+func NewBlockStmt(Statements []Stmt) *BlockStmt {
+	return &BlockStmt{
+		Statements: Statements,
+	}
+}
+
+func (e *BlockStmt) Accept(visitor StmtVisitor) (loxtype.Type, error) {
+	return visitor.VisitBlockStmt(e)
 }
 
 type ExpressionStmt struct {

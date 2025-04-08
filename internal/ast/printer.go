@@ -60,6 +60,10 @@ func (ap Printer) VisitVariableExpr(e *VariableExpr) (loxtype.Type, error) {
 	panic("unimplemented")
 }
 
+func (ap Printer) VisitBlockStmt(s *BlockStmt) (loxtype.Type, error) {
+	panic("unimplemented")
+}
+
 func (ap Printer) VisitExpressionStmt(s *ExpressionStmt) (loxtype.Type, error) {
 	value, _ := s.Expression.Accept(ap)
 	return loxtype.String(value.String() + ";"), nil

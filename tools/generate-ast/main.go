@@ -27,6 +27,7 @@ func main() {
 		"Variable : Name *token.Token",
 	)
 	defineAST(outputDir, "Stmt",
+		"Block      : Statements []Stmt",
 		"Expression : Expression Expr",
 		"Print      : Expression Expr",
 		"Var        : Name *token.Token, Initializer Expr",

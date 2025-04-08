@@ -104,6 +104,10 @@ func (i *Interpreter) isTruthy(value loxtype.Type) loxtype.Boolean {
 	return true
 }
 
+func (*Interpreter) VisitBlockStmt(s *ast.BlockStmt) (loxtype.Type, error) {
+	panic("unimplemented")
+}
+
 func (i *Interpreter) VisitExpressionStmt(s *ast.ExpressionStmt) (loxtype.Type, error) {
 	_, err := i.evaluate(s.Expression)
 	if err != nil {
