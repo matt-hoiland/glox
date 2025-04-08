@@ -14,6 +14,7 @@ var (
 	ErrUnimplemented          = errors.New("unimplemented")
 	ErrUnterminatedExpression = errors.New("expect ')' after expression")
 	ErrUnterminatedStatement  = errors.New("expect ';' after expression")
+	ErrUnterminatedBlock      = errors.New("expect '}' after block")
 )
 
 type Parser struct {
@@ -176,12 +177,42 @@ func (p *Parser) varDeclaration() (ast.Stmt, error) {
 // statement implements the production:
 //
 //	statement -> exprStmt
-//	           | printStmt ;
+//	           | printStmt
+//	           | block ;
 func (p *Parser) statement() (ast.Stmt, error) {
 	if p.match(token.TypePrint) {
 		return p.printStatement()
 	}
+	if p.match(token.TypeLeftBrace) {
+		stmts, err := p.block()
+		if err != nil {
+			return nil, err
+		}
+		block := ast.NewBlockStmt(stmts)
+		return block, nil
+	}
 	return p.expressionStatement()
+}
+
+// block implements the production:
+//
+//	block -> "{" declaration* "}" ;
+func (p *Parser) block() ([]ast.Stmt, error) {
+	var stmts []ast.Stmt
+
+	for !p.check(token.TypeRightBrace) && !p.isAtEnd() {
+		decl, err := p.declaration()
+		if err != nil {
+			return nil, err
+		}
+		stmts = append(stmts, decl)
+	}
+
+	if _, err := p.consume(token.TypeRightBrace, ErrUnterminatedBlock); err != nil {
+		return nil, err
+	}
+
+	return stmts, nil
 }
 
 func (p *Parser) expressionStatement() (ast.Stmt, error) {
