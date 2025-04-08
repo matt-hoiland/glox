@@ -25,6 +25,7 @@ type Scanner struct {
 func New(source string) *Scanner {
 	return &Scanner{
 		source: []runes.Rune(source),
+		line:   1,
 	}
 }
 

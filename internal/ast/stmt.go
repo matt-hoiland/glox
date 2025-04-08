@@ -3,6 +3,7 @@ package ast
 
 import (
 	"github.com/matt-hoiland/glox/internal/loxtype"
+	"github.com/matt-hoiland/glox/internal/token"
 )
 
 type Stmt interface {
@@ -12,6 +13,7 @@ type Stmt interface {
 type StmtVisitor interface {
 	VisitExpressionStmt(*ExpressionStmt) (loxtype.Type, error)
 	VisitPrintStmt(*PrintStmt) (loxtype.Type, error)
+	VisitVarStmt(*VarStmt) (loxtype.Type, error)
 }
 
 type ExpressionStmt struct {
@@ -44,4 +46,22 @@ func NewPrintStmt(Expression Expr) *PrintStmt {
 
 func (e *PrintStmt) Accept(visitor StmtVisitor) (loxtype.Type, error) {
 	return visitor.VisitPrintStmt(e)
+}
+
+type VarStmt struct {
+	Name        *token.Token
+	Initializer Expr
+}
+
+var _ Stmt = (*VarStmt)(nil)
+
+func NewVarStmt(Name *token.Token, Initializer Expr) *VarStmt {
+	return &VarStmt{
+		Name:        Name,
+		Initializer: Initializer,
+	}
+}
+
+func (e *VarStmt) Accept(visitor StmtVisitor) (loxtype.Type, error) {
+	return visitor.VisitVarStmt(e)
 }

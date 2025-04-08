@@ -2,12 +2,26 @@ package errors
 
 import (
 	"fmt"
+
+	"github.com/matt-hoiland/glox/internal/token"
 )
 
 type Error struct {
 	Line  int
 	Where string
 	Err   error
+}
+
+func New(tok *token.Token, err error) *Error {
+	e := &Error{
+		Line:  tok.Line,
+		Where: " at '" + tok.Lexeme + "'",
+		Err:   err,
+	}
+	if tok.Type == token.TypeEOF {
+		e.Where = " at end"
+	}
+	return e
 }
 
 func (err *Error) Error() string {

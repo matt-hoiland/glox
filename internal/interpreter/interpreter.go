@@ -5,7 +5,10 @@ import (
 	"fmt"
 
 	"github.com/matt-hoiland/glox/internal/ast"
+	ierrors "github.com/matt-hoiland/glox/internal/errors"
 	"github.com/matt-hoiland/glox/internal/loxtype"
+	"github.com/matt-hoiland/glox/internal/parser"
+	"github.com/matt-hoiland/glox/internal/scanner"
 	"github.com/matt-hoiland/glox/internal/token"
 )
 
@@ -16,18 +19,94 @@ var (
 	ErrNonBooleanType = fmt.Errorf("non-boolean %w", ErrType)
 	ErrNonNumericType = fmt.Errorf("non-numeric %w", ErrType)
 	ErrNonStringType  = fmt.Errorf("non-string %w", ErrType)
+
+	ErrUndefinedVariable = errors.New("undefined variable")
 )
 
-type Interpreter struct{}
-
-var _ ast.ExprVisitor = (*Interpreter)(nil)
-
-func New() *Interpreter {
-	return &Interpreter{}
+type UndefinedVariableError struct {
+	token *token.Token
 }
 
-func (i *Interpreter) Evaluate(e ast.Expr) (loxtype.Type, error) {
-	return i.evaluate(e)
+func newUndefinedVariableError(token *token.Token) *UndefinedVariableError {
+	return &UndefinedVariableError{token: token}
+}
+
+func (e *UndefinedVariableError) Error() string {
+	return fmt.Sprintf("undefined variable: %s", e.token.Lexeme)
+}
+
+type environment map[string]loxtype.Type
+
+func (e environment) assign(name *token.Token, value loxtype.Type) error {
+	if _, ok := e[name.Lexeme]; !ok {
+		return ierrors.New(name, newUndefinedVariableError(name))
+	}
+	e[name.Lexeme] = value
+	return nil
+}
+
+func (e environment) define(name *token.Token, value loxtype.Type) {
+	e[name.Lexeme] = value
+}
+
+func (e environment) get(name *token.Token) (loxtype.Type, error) {
+	value, ok := e[name.Lexeme]
+	if !ok {
+		return nil, ierrors.New(name, fmt.Errorf("%w: %s", ErrUndefinedVariable, name.Lexeme))
+	}
+	return value, nil
+}
+
+type Interpreter struct {
+	environment environment
+}
+
+var (
+	_ ast.ExprVisitor = (*Interpreter)(nil)
+	_ ast.StmtVisitor = (*Interpreter)(nil)
+)
+
+func New() *Interpreter {
+	return &Interpreter{
+		environment: environment{},
+	}
+}
+
+func (i *Interpreter) Run(code string) error {
+	var (
+		tokens []*token.Token
+		stmts  []ast.Stmt
+		err    error
+	)
+
+	if tokens, err = scanner.New(code).ScanTokens(); err != nil {
+		return err
+	}
+
+	if stmts, err = parser.New(tokens).Parse(); err != nil {
+		return err
+	}
+
+	if err = i.Interpret(stmts); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (i *Interpreter) Interpret(stmts []ast.Stmt) error {
+	for _, s := range stmts {
+		if err := i.execute(s); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (i *Interpreter) execute(s ast.Stmt) error {
+	if _, err := s.Accept(i); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (i *Interpreter) evaluate(e ast.Expr) (loxtype.Type, error) {
@@ -59,6 +138,49 @@ func (i *Interpreter) isTruthy(value loxtype.Type) loxtype.Boolean {
 		return b
 	}
 	return true
+}
+
+func (i *Interpreter) VisitExpressionStmt(s *ast.ExpressionStmt) (loxtype.Type, error) {
+	_, err := i.evaluate(s.Expression)
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
+func (i *Interpreter) VisitPrintStmt(s *ast.PrintStmt) (loxtype.Type, error) {
+	value, err := i.evaluate(s.Expression)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(value)
+	return nil, nil
+}
+
+func (i *Interpreter) VisitVarStmt(s *ast.VarStmt) (loxtype.Type, error) {
+	var (
+		value loxtype.Type = loxtype.Nil{}
+		err   error
+	)
+	if s.Initializer != nil {
+		if value, err = i.evaluate(s.Initializer); err != nil {
+			return nil, err
+		}
+	}
+
+	i.environment.define(s.Name, value)
+	return nil, nil
+}
+
+func (i *Interpreter) VisitAssignExpr(e *ast.AssignExpr) (loxtype.Type, error) {
+	value, err := i.evaluate(e.Value)
+	if err != nil {
+		return nil, err
+	}
+	if err = i.environment.assign(e.Name, value); err != nil {
+		return nil, err
+	}
+	return value, nil
 }
 
 func (i *Interpreter) VisitBinaryExpr(e *ast.BinaryExpr) (loxtype.Type, error) {
@@ -159,6 +281,10 @@ func (i *Interpreter) VisitUnaryExpr(e *ast.UnaryExpr) (loxtype.Type, error) {
 	}
 
 	return nil, ErrUnimplemented
+}
+
+func (i *Interpreter) VisitVariableExpr(e *ast.VariableExpr) (loxtype.Type, error) {
+	return i.environment.get(e.Name)
 }
 
 func convertBoth[T any](a, b loxtype.Type, err error) (T, T, error) {

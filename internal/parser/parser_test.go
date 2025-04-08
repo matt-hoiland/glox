@@ -15,8 +15,11 @@ func TestParser_Parse(t *testing.T) {
 	code := `1 + "hello" * (3 - 4) > 14 == true;`
 	tokens, scanErr := scanner.New(code).ScanTokens()
 	require.NoError(t, scanErr)
-	expr, parseErr := parser.New(tokens).Parse()
+	stmts, parseErr := parser.New(tokens).Parse()
 	require.NoError(t, parseErr)
 	var p ast.Printer
-	fmt.Println(p.Print(expr))
+
+	for _, s := range stmts {
+		fmt.Println(p.Print(s))
+	}
 }

@@ -19,14 +19,17 @@ func main() {
 	}
 	outputDir := os.Args[1]
 	defineAST(outputDir, "Expr",
+		"Assign   : Name *token.Token, Value Expr",
 		"Binary   : Left Expr, Operator *token.Token, Right Expr",
 		"Grouping : Expression Expr",
 		"Literal  : Value loxtype.Type",
 		"Unary    : Operator *token.Token, Right Expr",
+		"Variable : Name *token.Token",
 	)
 	defineAST(outputDir, "Stmt",
 		"Expression : Expression Expr",
 		"Print      : Expression Expr",
+		"Var        : Name *token.Token, Initializer Expr",
 	)
 }
 

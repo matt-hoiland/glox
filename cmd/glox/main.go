@@ -5,12 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/matt-hoiland/glox/internal/ast"
 	"github.com/matt-hoiland/glox/internal/constants/exit"
 	"github.com/matt-hoiland/glox/internal/interpreter"
-	"github.com/matt-hoiland/glox/internal/parser"
-	"github.com/matt-hoiland/glox/internal/scanner"
-	"github.com/matt-hoiland/glox/internal/token"
 )
 
 func main() {
@@ -31,46 +27,26 @@ func main() {
 	}
 }
 
-func run(code string) error {
-	var (
-		tokens []*token.Token
-		ast    ast.Expr
-		err    error
-	)
-
-	if tokens, err = scanner.New(code).ScanTokens(); err != nil {
-		return err
-	}
-
-	if ast, err = parser.New(tokens).Parse(); err != nil {
-		return err
-	}
-
-	value, err := interpreter.New().Evaluate(ast)
-	if err != nil {
-		return err
-	}
-	fmt.Println(value.String())
-	return nil
-}
-
 func runFile(filename string) (err error) {
 	var data []byte
 	if data, err = os.ReadFile(filename); err != nil {
 		return fmt.Errorf("could not read file '%s': %w", filename, err)
 	}
-	return run(string(data))
+	return interpreter.New().Run(string(data))
 }
 
 func runPrompt() error {
-	reader := bufio.NewScanner(os.Stdin)
+	var (
+		i      = interpreter.New()
+		reader = bufio.NewScanner(os.Stdin)
+	)
 	for {
 		fmt.Print("> ")
 		if !reader.Scan() {
 			break
 		}
 		line := reader.Text()
-		if err := run(line); err != nil {
+		if err := i.Run(line); err != nil {
 			return err
 		}
 	}

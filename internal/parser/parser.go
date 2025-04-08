@@ -10,8 +10,10 @@ import (
 )
 
 var (
-	ErrUnterminatedExpression = errors.New("expect ')' after expression")
+	ErrNoVariableName         = errors.New("expect variable name")
 	ErrUnimplemented          = errors.New("unimplemented")
+	ErrUnterminatedExpression = errors.New("expect ')' after expression")
+	ErrUnterminatedStatement  = errors.New("expect ';' after expression")
 )
 
 type Parser struct {
@@ -26,8 +28,16 @@ func New(tokens []*token.Token) *Parser {
 	}
 }
 
-func (p *Parser) Parse() (ast.Expr, error) {
-	return p.expression()
+func (p *Parser) Parse() ([]ast.Stmt, error) {
+	var statements []ast.Stmt
+	for !p.isAtEnd() {
+		stmt, err := p.declaration()
+		if err != nil {
+			return nil, err
+		}
+		statements = append(statements, stmt)
+	}
+	return statements, nil
 }
 
 //----------------------------------------------------------------------------
@@ -57,14 +67,7 @@ func (p *Parser) consume(tokenType token.Type, err error) (*token.Token, error) 
 		return p.advance(), nil
 	}
 
-	return nil, p.error(p.peek(), err)
-}
-
-func (p *Parser) error(token *token.Token, err error) error {
-	return &ierrors.Error{
-		Line: token.Line,
-		Err:  err,
-	}
+	return nil, ierrors.New(p.peek(), err)
 }
 
 // isAtEnd checks if we’ve run out of tokens to parse.
@@ -124,11 +127,117 @@ func (p *Parser) synchronize() {
 // Grammar production methods.
 //----------------------------------------------------------------------------
 
+// declaration implements the production:
+//
+//	declaration -> varDecl
+//	             | statement ;
+func (p *Parser) declaration() (stmt ast.Stmt, err error) {
+	defer func() {
+		if err != nil {
+			p.synchronize()
+		}
+	}()
+
+	if p.match(token.TypeVar) {
+		stmt, err = p.varDeclaration()
+		return stmt, err
+	}
+	stmt, err = p.statement()
+	return stmt, err
+}
+
+// varDeclaration implements the production:
+//
+//	varDecl -> "var" IDENTIFIER ( "=" expression )? ";" ;
+func (p *Parser) varDeclaration() (ast.Stmt, error) {
+	var (
+		name        *token.Token
+		initializer ast.Expr
+		err         error
+	)
+
+	if name, err = p.consume(token.TypeIdentifier, ErrNoVariableName); err != nil {
+		return nil, err
+	}
+
+	if p.match(token.TypeEqual) {
+		if initializer, err = p.expression(); err != nil {
+			return nil, err
+		}
+	}
+
+	if _, err := p.consume(token.TypeSemicolon, ErrUnterminatedStatement); err != nil {
+		return nil, err
+	}
+
+	return ast.NewVarStmt(name, initializer), nil
+}
+
+// statement implements the production:
+//
+//	statement -> exprStmt
+//	           | printStmt ;
+func (p *Parser) statement() (ast.Stmt, error) {
+	if p.match(token.TypePrint) {
+		return p.printStatement()
+	}
+	return p.expressionStatement()
+}
+
+func (p *Parser) expressionStatement() (ast.Stmt, error) {
+	value, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+	if _, err = p.consume(token.TypeSemicolon, ErrUnterminatedStatement); err != nil {
+		return nil, err
+	}
+	return ast.NewExpressionStmt(value), nil
+}
+
+func (p *Parser) printStatement() (ast.Stmt, error) {
+	value, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+	if _, err = p.consume(token.TypeSemicolon, ErrUnterminatedStatement); err != nil {
+		return nil, err
+	}
+	return ast.NewPrintStmt(value), nil
+}
+
 // expression implements the production:
 //
-//	expression -> equality ;
+//	expression -> assignment ;
 func (p *Parser) expression() (ast.Expr, error) {
-	return p.equality()
+	return p.assignment()
+}
+
+// assignment implements the production:
+//
+//	assignment -> IDENTIFIER "=" assignment
+//	            | equality ;
+func (p *Parser) assignment() (ast.Expr, error) {
+	expr, err := p.equality()
+	if err != nil {
+		return nil, err
+	}
+
+	if p.match(token.TypeEqual) {
+		equals := p.previous()
+		value, err := p.assignment()
+		if err != nil {
+			return nil, err
+		}
+
+		if varExpr, ok := expr.(*ast.VariableExpr); ok {
+			name := varExpr.Name
+			return ast.NewAssignExpr(name, value), nil
+		}
+
+		return nil, ierrors.New(equals, nil)
+	}
+	return expr, nil
 }
 
 // equality implements the production:
@@ -217,8 +326,8 @@ func (p *Parser) factor() (ast.Expr, error) {
 
 // unary implements the production:
 //
-//	 unary -> ( "!" | "-" ) unary
-//		    | primary ;
+//	unary -> ( "!" | "-" ) unary
+//	       | primary ;
 func (p *Parser) unary() (ast.Expr, error) {
 	if p.match(token.TypeBang, token.TypeMinus) {
 		operator := p.previous()
@@ -234,8 +343,10 @@ func (p *Parser) unary() (ast.Expr, error) {
 
 // primary implements the production:
 //
-//	 primary -> NUMBER | STRING | "true" | "false" | "nil"
-//		      | "(" expression ")" ;
+//	primary -> "true" | "false" | "nil"
+//	         | NUMBER | STRING
+//	         | "(" expression ")"
+//	         | IDENTIFIER ;
 func (p *Parser) primary() (ast.Expr, error) {
 	if p.match(token.TypeFalse) {
 		return ast.NewLiteralExpr(loxtype.Boolean(false)), nil
@@ -248,6 +359,9 @@ func (p *Parser) primary() (ast.Expr, error) {
 	}
 	if p.match(token.TypeNumber, token.TypeString) {
 		return ast.NewLiteralExpr(p.previous().Literal), nil
+	}
+	if p.match(token.TypeIdentifier) {
+		return ast.NewVariableExpr(p.previous()), nil
 	}
 	if p.match(token.TypeLeftParen) {
 		expression, err := p.expression()

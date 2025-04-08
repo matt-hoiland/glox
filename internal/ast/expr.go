@@ -11,10 +11,30 @@ type Expr interface {
 }
 
 type ExprVisitor interface {
+	VisitAssignExpr(*AssignExpr) (loxtype.Type, error)
 	VisitBinaryExpr(*BinaryExpr) (loxtype.Type, error)
 	VisitGroupingExpr(*GroupingExpr) (loxtype.Type, error)
 	VisitLiteralExpr(*LiteralExpr) (loxtype.Type, error)
 	VisitUnaryExpr(*UnaryExpr) (loxtype.Type, error)
+	VisitVariableExpr(*VariableExpr) (loxtype.Type, error)
+}
+
+type AssignExpr struct {
+	Name  *token.Token
+	Value Expr
+}
+
+var _ Expr = (*AssignExpr)(nil)
+
+func NewAssignExpr(Name *token.Token, Value Expr) *AssignExpr {
+	return &AssignExpr{
+		Name:  Name,
+		Value: Value,
+	}
+}
+
+func (e *AssignExpr) Accept(visitor ExprVisitor) (loxtype.Type, error) {
+	return visitor.VisitAssignExpr(e)
 }
 
 type BinaryExpr struct {
@@ -85,4 +105,20 @@ func NewUnaryExpr(Operator *token.Token, Right Expr) *UnaryExpr {
 
 func (e *UnaryExpr) Accept(visitor ExprVisitor) (loxtype.Type, error) {
 	return visitor.VisitUnaryExpr(e)
+}
+
+type VariableExpr struct {
+	Name *token.Token
+}
+
+var _ Expr = (*VariableExpr)(nil)
+
+func NewVariableExpr(Name *token.Token) *VariableExpr {
+	return &VariableExpr{
+		Name: Name,
+	}
+}
+
+func (e *VariableExpr) Accept(visitor ExprVisitor) (loxtype.Type, error) {
+	return visitor.VisitVariableExpr(e)
 }

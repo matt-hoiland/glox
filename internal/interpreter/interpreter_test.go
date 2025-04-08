@@ -3,7 +3,6 @@ package interpreter_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/matt-hoiland/glox/internal/interpreter"
@@ -47,18 +46,16 @@ func TestInterpreter_Evaluate(t *testing.T) {
 			i := &interpreter.Interpreter{}
 			tokens, err := scanner.New(test.Source).ScanTokens()
 			require.NoError(t, err)
-			e, err := parser.New(tokens).Parse()
+			stmts, err := parser.New(tokens).Parse()
 			require.NoError(t, err)
-			val, err := i.Evaluate(e)
+			err = i.Interpret(stmts)
 
 			if test.ExpectedError != nil {
 				require.ErrorIs(t, err, test.ExpectedError)
-				require.Nil(t, val)
 				return
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, test.ExpectedValue, val)
 		})
 	}
 }
