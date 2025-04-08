@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/matt-hoiland/glox/internal/constants/exit"
+	"github.com/matt-hoiland/glox/internal/environment"
 	"github.com/matt-hoiland/glox/internal/interpreter"
 )
 
@@ -32,13 +33,14 @@ func runFile(filename string) (err error) {
 	if data, err = os.ReadFile(filename); err != nil {
 		return fmt.Errorf("could not read file '%s': %w", filename, err)
 	}
-	return interpreter.New().Run(string(data))
+	return interpreter.New().Run(environment.New(), string(data))
 }
 
 func runPrompt() error {
 	var (
-		i      = interpreter.New()
-		reader = bufio.NewScanner(os.Stdin)
+		i         = interpreter.New()
+		reader    = bufio.NewScanner(os.Stdin)
+		globalEnv = environment.New()
 	)
 	for {
 		fmt.Print("> ")
@@ -46,7 +48,7 @@ func runPrompt() error {
 			break
 		}
 		line := reader.Text()
-		if err := i.Run(line); err != nil {
+		if err := i.Run(globalEnv, line); err != nil {
 			return err
 		}
 	}

@@ -41,12 +41,13 @@ func defineAST(outputDir, baseName string, productions ...string) {
 	fmt.Fprintln(w, "package ast")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "import (")
+	fmt.Fprintln(w, `	"github.com/matt-hoiland/glox/internal/environment"`)
 	fmt.Fprintln(w, `	"github.com/matt-hoiland/glox/internal/loxtype"`)
 	fmt.Fprintln(w, `	"github.com/matt-hoiland/glox/internal/token"`)
 	fmt.Fprintln(w, ")")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "type "+baseName+" interface {")
-	fmt.Fprintln(w, "\tAccept("+baseName+"Visitor) (loxtype.Type, error)")
+	fmt.Fprintln(w, "\tAccept(*environment.Environment, "+baseName+"Visitor) (loxtype.Type, error)")
 	fmt.Fprintln(w, "}")
 	fmt.Fprintln(w)
 	defineVisitor(w, baseName, productions...)
@@ -89,8 +90,8 @@ func defineType(w io.Writer, baseName, typeName, fieldList string) {
 	fmt.Fprintln(w, "\t}")
 	fmt.Fprintln(w, "}")
 	fmt.Fprintln(w)
-	fmt.Fprintf(w, "func (e *%s%s) Accept(visitor %sVisitor) (loxtype.Type, error) {\n", typeName, baseName, baseName)
-	fmt.Fprintf(w, "\treturn visitor.Visit%s%s(e)\n", typeName, baseName)
+	fmt.Fprintf(w, "func (e *%s%s) Accept(env *environment.Environment, visitor %sVisitor) (loxtype.Type, error) {\n", typeName, baseName, baseName)
+	fmt.Fprintf(w, "\treturn visitor.Visit%s%s(env, e)\n", typeName, baseName)
 	fmt.Fprintln(w, "}")
 	fmt.Fprintln(w)
 }
@@ -99,7 +100,7 @@ func defineVisitor(w io.Writer, baseName string, productions ...string) {
 	fmt.Fprintf(w, "type %sVisitor interface {\n", baseName)
 	for _, production := range productions {
 		typeName := strings.TrimSpace(strings.Split(production, ":")[0])
-		fmt.Fprintf(w, "\tVisit%s%s(*%s%s) (loxtype.Type, error)\n", typeName, baseName, typeName, baseName)
+		fmt.Fprintf(w, "\tVisit%s%s(*environment.Environment, *%s%s) (loxtype.Type, error)\n", typeName, baseName, typeName, baseName)
 	}
 	fmt.Fprintln(w, `}`)
 }

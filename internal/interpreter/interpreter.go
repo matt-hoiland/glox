@@ -21,9 +21,7 @@ var (
 	ErrNonStringType  = fmt.Errorf("non-string %w", ErrType)
 )
 
-type Interpreter struct {
-	environment *environment.Environment
-}
+type Interpreter struct{}
 
 var (
 	_ ast.ExprVisitor = (*Interpreter)(nil)
@@ -31,12 +29,10 @@ var (
 )
 
 func New() *Interpreter {
-	return &Interpreter{
-		environment: environment.New(),
-	}
+	return &Interpreter{}
 }
 
-func (i *Interpreter) Run(code string) error {
+func (i *Interpreter) Run(env *environment.Environment, code string) error {
 	var (
 		tokens []*token.Token
 		stmts  []ast.Stmt
@@ -51,30 +47,30 @@ func (i *Interpreter) Run(code string) error {
 		return err
 	}
 
-	if err = i.Interpret(stmts); err != nil {
+	if err = i.Interpret(env, stmts); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (i *Interpreter) Interpret(stmts []ast.Stmt) error {
+func (i *Interpreter) Interpret(env *environment.Environment, stmts []ast.Stmt) error {
 	for _, s := range stmts {
-		if err := i.execute(s); err != nil {
+		if err := i.execute(env, s); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (i *Interpreter) execute(s ast.Stmt) error {
-	if _, err := s.Accept(i); err != nil {
+func (i *Interpreter) execute(env *environment.Environment, s ast.Stmt) error {
+	if _, err := s.Accept(env, i); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (i *Interpreter) evaluate(e ast.Expr) (loxtype.Type, error) {
-	return e.Accept(i)
+func (i *Interpreter) evaluate(env *environment.Environment, e ast.Expr) (loxtype.Type, error) {
+	return e.Accept(env, i)
 }
 
 func (i *Interpreter) isEqual(a, b loxtype.Type) loxtype.Boolean {
@@ -104,20 +100,20 @@ func (i *Interpreter) isTruthy(value loxtype.Type) loxtype.Boolean {
 	return true
 }
 
-func (*Interpreter) VisitBlockStmt(s *ast.BlockStmt) (loxtype.Type, error) {
+func (*Interpreter) VisitBlockStmt(env *environment.Environment, s *ast.BlockStmt) (loxtype.Type, error) {
 	panic("unimplemented")
 }
 
-func (i *Interpreter) VisitExpressionStmt(s *ast.ExpressionStmt) (loxtype.Type, error) {
-	_, err := i.evaluate(s.Expression)
+func (i *Interpreter) VisitExpressionStmt(env *environment.Environment, s *ast.ExpressionStmt) (loxtype.Type, error) {
+	_, err := i.evaluate(env, s.Expression)
 	if err != nil {
 		return nil, err
 	}
 	return nil, nil
 }
 
-func (i *Interpreter) VisitPrintStmt(s *ast.PrintStmt) (loxtype.Type, error) {
-	value, err := i.evaluate(s.Expression)
+func (i *Interpreter) VisitPrintStmt(env *environment.Environment, s *ast.PrintStmt) (loxtype.Type, error) {
+	value, err := i.evaluate(env, s.Expression)
 	if err != nil {
 		return nil, err
 	}
@@ -125,38 +121,38 @@ func (i *Interpreter) VisitPrintStmt(s *ast.PrintStmt) (loxtype.Type, error) {
 	return nil, nil
 }
 
-func (i *Interpreter) VisitVarStmt(s *ast.VarStmt) (loxtype.Type, error) {
+func (i *Interpreter) VisitVarStmt(env *environment.Environment, s *ast.VarStmt) (loxtype.Type, error) {
 	var (
 		value loxtype.Type = loxtype.Nil{}
 		err   error
 	)
 	if s.Initializer != nil {
-		if value, err = i.evaluate(s.Initializer); err != nil {
+		if value, err = i.evaluate(env, s.Initializer); err != nil {
 			return nil, err
 		}
 	}
 
-	i.environment.Define(s.Name, value)
+	env.Define(s.Name, value)
 	return nil, nil
 }
 
-func (i *Interpreter) VisitAssignExpr(e *ast.AssignExpr) (loxtype.Type, error) {
-	value, err := i.evaluate(e.Value)
+func (i *Interpreter) VisitAssignExpr(env *environment.Environment, e *ast.AssignExpr) (loxtype.Type, error) {
+	value, err := i.evaluate(env, e.Value)
 	if err != nil {
 		return nil, err
 	}
-	if err = i.environment.Assign(e.Name, value); err != nil {
+	if err = env.Assign(e.Name, value); err != nil {
 		return nil, err
 	}
 	return value, nil
 }
 
-func (i *Interpreter) VisitBinaryExpr(e *ast.BinaryExpr) (loxtype.Type, error) {
-	left, err := i.evaluate(e.Left)
+func (i *Interpreter) VisitBinaryExpr(env *environment.Environment, e *ast.BinaryExpr) (loxtype.Type, error) {
+	left, err := i.evaluate(env, e.Left)
 	if err != nil {
 		return nil, fmt.Errorf("could not evaluate left operand of binary expression: %w", err)
 	}
-	right, err := i.evaluate(e.Right)
+	right, err := i.evaluate(env, e.Right)
 	if err != nil {
 		return nil, fmt.Errorf("could not evaluate right operand of binary expression: %w", err)
 	}
@@ -223,16 +219,16 @@ func (i *Interpreter) VisitBinaryExpr(e *ast.BinaryExpr) (loxtype.Type, error) {
 	return nil, ErrUnimplemented
 }
 
-func (i *Interpreter) VisitGroupingExpr(e *ast.GroupingExpr) (loxtype.Type, error) {
-	return i.evaluate(e.Expression)
+func (i *Interpreter) VisitGroupingExpr(env *environment.Environment, e *ast.GroupingExpr) (loxtype.Type, error) {
+	return i.evaluate(env, e.Expression)
 }
 
-func (i *Interpreter) VisitLiteralExpr(e *ast.LiteralExpr) (loxtype.Type, error) {
+func (i *Interpreter) VisitLiteralExpr(env *environment.Environment, e *ast.LiteralExpr) (loxtype.Type, error) {
 	return e.Value, nil
 }
 
-func (i *Interpreter) VisitUnaryExpr(e *ast.UnaryExpr) (loxtype.Type, error) {
-	right, err := i.evaluate(e.Right)
+func (i *Interpreter) VisitUnaryExpr(env *environment.Environment, e *ast.UnaryExpr) (loxtype.Type, error) {
+	right, err := i.evaluate(env, e.Right)
 	if err != nil {
 		return nil, fmt.Errorf("could not evaluate operand of unary expression: %w", err)
 	}
@@ -251,8 +247,8 @@ func (i *Interpreter) VisitUnaryExpr(e *ast.UnaryExpr) (loxtype.Type, error) {
 	return nil, ErrUnimplemented
 }
 
-func (i *Interpreter) VisitVariableExpr(e *ast.VariableExpr) (loxtype.Type, error) {
-	return i.environment.Get(e.Name)
+func (i *Interpreter) VisitVariableExpr(env *environment.Environment, e *ast.VariableExpr) (loxtype.Type, error) {
+	return env.Get(e.Name)
 }
 
 func convertBoth[T any](a, b loxtype.Type, err error) (T, T, error) {

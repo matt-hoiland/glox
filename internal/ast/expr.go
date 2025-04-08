@@ -2,21 +2,22 @@
 package ast
 
 import (
+	"github.com/matt-hoiland/glox/internal/environment"
 	"github.com/matt-hoiland/glox/internal/loxtype"
 	"github.com/matt-hoiland/glox/internal/token"
 )
 
 type Expr interface {
-	Accept(ExprVisitor) (loxtype.Type, error)
+	Accept(*environment.Environment, ExprVisitor) (loxtype.Type, error)
 }
 
 type ExprVisitor interface {
-	VisitAssignExpr(*AssignExpr) (loxtype.Type, error)
-	VisitBinaryExpr(*BinaryExpr) (loxtype.Type, error)
-	VisitGroupingExpr(*GroupingExpr) (loxtype.Type, error)
-	VisitLiteralExpr(*LiteralExpr) (loxtype.Type, error)
-	VisitUnaryExpr(*UnaryExpr) (loxtype.Type, error)
-	VisitVariableExpr(*VariableExpr) (loxtype.Type, error)
+	VisitAssignExpr(*environment.Environment, *AssignExpr) (loxtype.Type, error)
+	VisitBinaryExpr(*environment.Environment, *BinaryExpr) (loxtype.Type, error)
+	VisitGroupingExpr(*environment.Environment, *GroupingExpr) (loxtype.Type, error)
+	VisitLiteralExpr(*environment.Environment, *LiteralExpr) (loxtype.Type, error)
+	VisitUnaryExpr(*environment.Environment, *UnaryExpr) (loxtype.Type, error)
+	VisitVariableExpr(*environment.Environment, *VariableExpr) (loxtype.Type, error)
 }
 
 type AssignExpr struct {
@@ -33,8 +34,8 @@ func NewAssignExpr(Name *token.Token, Value Expr) *AssignExpr {
 	}
 }
 
-func (e *AssignExpr) Accept(visitor ExprVisitor) (loxtype.Type, error) {
-	return visitor.VisitAssignExpr(e)
+func (e *AssignExpr) Accept(env *environment.Environment, visitor ExprVisitor) (loxtype.Type, error) {
+	return visitor.VisitAssignExpr(env, e)
 }
 
 type BinaryExpr struct {
@@ -53,8 +54,8 @@ func NewBinaryExpr(Left Expr, Operator *token.Token, Right Expr) *BinaryExpr {
 	}
 }
 
-func (e *BinaryExpr) Accept(visitor ExprVisitor) (loxtype.Type, error) {
-	return visitor.VisitBinaryExpr(e)
+func (e *BinaryExpr) Accept(env *environment.Environment, visitor ExprVisitor) (loxtype.Type, error) {
+	return visitor.VisitBinaryExpr(env, e)
 }
 
 type GroupingExpr struct {
@@ -69,8 +70,8 @@ func NewGroupingExpr(Expression Expr) *GroupingExpr {
 	}
 }
 
-func (e *GroupingExpr) Accept(visitor ExprVisitor) (loxtype.Type, error) {
-	return visitor.VisitGroupingExpr(e)
+func (e *GroupingExpr) Accept(env *environment.Environment, visitor ExprVisitor) (loxtype.Type, error) {
+	return visitor.VisitGroupingExpr(env, e)
 }
 
 type LiteralExpr struct {
@@ -85,8 +86,8 @@ func NewLiteralExpr(Value loxtype.Type) *LiteralExpr {
 	}
 }
 
-func (e *LiteralExpr) Accept(visitor ExprVisitor) (loxtype.Type, error) {
-	return visitor.VisitLiteralExpr(e)
+func (e *LiteralExpr) Accept(env *environment.Environment, visitor ExprVisitor) (loxtype.Type, error) {
+	return visitor.VisitLiteralExpr(env, e)
 }
 
 type UnaryExpr struct {
@@ -103,8 +104,8 @@ func NewUnaryExpr(Operator *token.Token, Right Expr) *UnaryExpr {
 	}
 }
 
-func (e *UnaryExpr) Accept(visitor ExprVisitor) (loxtype.Type, error) {
-	return visitor.VisitUnaryExpr(e)
+func (e *UnaryExpr) Accept(env *environment.Environment, visitor ExprVisitor) (loxtype.Type, error) {
+	return visitor.VisitUnaryExpr(env, e)
 }
 
 type VariableExpr struct {
@@ -119,6 +120,6 @@ func NewVariableExpr(Name *token.Token) *VariableExpr {
 	}
 }
 
-func (e *VariableExpr) Accept(visitor ExprVisitor) (loxtype.Type, error) {
-	return visitor.VisitVariableExpr(e)
+func (e *VariableExpr) Accept(env *environment.Environment, visitor ExprVisitor) (loxtype.Type, error) {
+	return visitor.VisitVariableExpr(env, e)
 }

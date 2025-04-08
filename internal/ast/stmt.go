@@ -2,19 +2,20 @@
 package ast
 
 import (
+	"github.com/matt-hoiland/glox/internal/environment"
 	"github.com/matt-hoiland/glox/internal/loxtype"
 	"github.com/matt-hoiland/glox/internal/token"
 )
 
 type Stmt interface {
-	Accept(StmtVisitor) (loxtype.Type, error)
+	Accept(*environment.Environment, StmtVisitor) (loxtype.Type, error)
 }
 
 type StmtVisitor interface {
-	VisitBlockStmt(*BlockStmt) (loxtype.Type, error)
-	VisitExpressionStmt(*ExpressionStmt) (loxtype.Type, error)
-	VisitPrintStmt(*PrintStmt) (loxtype.Type, error)
-	VisitVarStmt(*VarStmt) (loxtype.Type, error)
+	VisitBlockStmt(*environment.Environment, *BlockStmt) (loxtype.Type, error)
+	VisitExpressionStmt(*environment.Environment, *ExpressionStmt) (loxtype.Type, error)
+	VisitPrintStmt(*environment.Environment, *PrintStmt) (loxtype.Type, error)
+	VisitVarStmt(*environment.Environment, *VarStmt) (loxtype.Type, error)
 }
 
 type BlockStmt struct {
@@ -29,8 +30,8 @@ func NewBlockStmt(Statements []Stmt) *BlockStmt {
 	}
 }
 
-func (e *BlockStmt) Accept(visitor StmtVisitor) (loxtype.Type, error) {
-	return visitor.VisitBlockStmt(e)
+func (e *BlockStmt) Accept(env *environment.Environment, visitor StmtVisitor) (loxtype.Type, error) {
+	return visitor.VisitBlockStmt(env, e)
 }
 
 type ExpressionStmt struct {
@@ -45,8 +46,8 @@ func NewExpressionStmt(Expression Expr) *ExpressionStmt {
 	}
 }
 
-func (e *ExpressionStmt) Accept(visitor StmtVisitor) (loxtype.Type, error) {
-	return visitor.VisitExpressionStmt(e)
+func (e *ExpressionStmt) Accept(env *environment.Environment, visitor StmtVisitor) (loxtype.Type, error) {
+	return visitor.VisitExpressionStmt(env, e)
 }
 
 type PrintStmt struct {
@@ -61,8 +62,8 @@ func NewPrintStmt(Expression Expr) *PrintStmt {
 	}
 }
 
-func (e *PrintStmt) Accept(visitor StmtVisitor) (loxtype.Type, error) {
-	return visitor.VisitPrintStmt(e)
+func (e *PrintStmt) Accept(env *environment.Environment, visitor StmtVisitor) (loxtype.Type, error) {
+	return visitor.VisitPrintStmt(env, e)
 }
 
 type VarStmt struct {
@@ -79,6 +80,6 @@ func NewVarStmt(Name *token.Token, Initializer Expr) *VarStmt {
 	}
 }
 
-func (e *VarStmt) Accept(visitor StmtVisitor) (loxtype.Type, error) {
-	return visitor.VisitVarStmt(e)
+func (e *VarStmt) Accept(env *environment.Environment, visitor StmtVisitor) (loxtype.Type, error) {
+	return visitor.VisitVarStmt(env, e)
 }

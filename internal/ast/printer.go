@@ -3,6 +3,7 @@ package ast
 import (
 	"strings"
 
+	"github.com/matt-hoiland/glox/internal/environment"
 	"github.com/matt-hoiland/glox/internal/loxtype"
 )
 
@@ -17,63 +18,63 @@ var _ ExprVisitor = Printer{}
 var _ StmtVisitor = Printer{}
 
 func (ap Printer) Print(e Stmt) (loxtype.Type, error) {
-	return e.Accept(ap)
+	return e.Accept(nil, ap)
 }
 
-func (ap Printer) parenthesize(name string, expressions ...Expr) (loxtype.Type, error) {
+func (ap Printer) parenthesize(env *environment.Environment, name string, expressions ...Expr) (loxtype.Type, error) {
 	var builder strings.Builder
 	builder.WriteRune('(')
 	builder.WriteString(name)
 	for _, e := range expressions {
 		builder.WriteRune(' ')
-		s, _ := e.Accept(ap)
+		s, _ := e.Accept(env, ap)
 		builder.WriteString(s.String())
 	}
 	builder.WriteRune(')')
 	return loxtype.String(builder.String()), nil
 }
 
-func (ap Printer) VisitAssignExpr(e *AssignExpr) (loxtype.Type, error) {
+func (ap Printer) VisitAssignExpr(_ *environment.Environment, e *AssignExpr) (loxtype.Type, error) {
 	panic("unimplemented")
 }
 
-func (ap Printer) VisitBinaryExpr(e *BinaryExpr) (loxtype.Type, error) {
-	return ap.parenthesize(e.Operator.Lexeme, e.Left, e.Right)
+func (ap Printer) VisitBinaryExpr(env *environment.Environment, e *BinaryExpr) (loxtype.Type, error) {
+	return ap.parenthesize(env, e.Operator.Lexeme, e.Left, e.Right)
 }
 
-func (ap Printer) VisitGroupingExpr(e *GroupingExpr) (loxtype.Type, error) {
-	return ap.parenthesize("group", e.Expression)
+func (ap Printer) VisitGroupingExpr(env *environment.Environment, e *GroupingExpr) (loxtype.Type, error) {
+	return ap.parenthesize(env, "group", e.Expression)
 }
 
-func (ap Printer) VisitLiteralExpr(e *LiteralExpr) (loxtype.Type, error) {
+func (ap Printer) VisitLiteralExpr(_ *environment.Environment, e *LiteralExpr) (loxtype.Type, error) {
 	if e.Value == nil {
 		return loxtype.Nil{}, nil
 	}
 	return e.Value, nil
 }
 
-func (ap Printer) VisitUnaryExpr(e *UnaryExpr) (loxtype.Type, error) {
-	return ap.parenthesize(e.Operator.Lexeme, e.Right)
+func (ap Printer) VisitUnaryExpr(env *environment.Environment, e *UnaryExpr) (loxtype.Type, error) {
+	return ap.parenthesize(env, e.Operator.Lexeme, e.Right)
 }
 
-func (ap Printer) VisitVariableExpr(e *VariableExpr) (loxtype.Type, error) {
+func (ap Printer) VisitVariableExpr(_ *environment.Environment, e *VariableExpr) (loxtype.Type, error) {
 	panic("unimplemented")
 }
 
-func (ap Printer) VisitBlockStmt(s *BlockStmt) (loxtype.Type, error) {
+func (ap Printer) VisitBlockStmt(_ *environment.Environment, s *BlockStmt) (loxtype.Type, error) {
 	panic("unimplemented")
 }
 
-func (ap Printer) VisitExpressionStmt(s *ExpressionStmt) (loxtype.Type, error) {
-	value, _ := s.Expression.Accept(ap)
+func (ap Printer) VisitExpressionStmt(env *environment.Environment, s *ExpressionStmt) (loxtype.Type, error) {
+	value, _ := s.Expression.Accept(env, ap)
 	return loxtype.String(value.String() + ";"), nil
 }
 
-func (ap Printer) VisitPrintStmt(s *PrintStmt) (loxtype.Type, error) {
-	value, _ := s.Expression.Accept(ap)
+func (ap Printer) VisitPrintStmt(env *environment.Environment, s *PrintStmt) (loxtype.Type, error) {
+	value, _ := s.Expression.Accept(env, ap)
 	return loxtype.String("print " + value.String() + ";"), nil
 }
 
-func (ap Printer) VisitVarStmt(s *VarStmt) (loxtype.Type, error) {
+func (ap Printer) VisitVarStmt(_ *environment.Environment, s *VarStmt) (loxtype.Type, error) {
 	panic("unimplemented")
 }

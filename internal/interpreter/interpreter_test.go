@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/matt-hoiland/glox/internal/environment"
 	"github.com/matt-hoiland/glox/internal/interpreter"
 	"github.com/matt-hoiland/glox/internal/loxtype"
 	"github.com/matt-hoiland/glox/internal/parser"
@@ -37,6 +38,15 @@ func TestInterpreter_Evaluate(t *testing.T) {
 			Source:        `!nil;`,
 			ExpectedValue: loxtype.Boolean(true),
 		},
+		{
+			Name: "success/assignment",
+			Source: `
+			var a = "hello";
+			a = "world";
+			a;
+			`,
+			ExpectedValue: loxtype.String("world"),
+		},
 	}
 
 	for _, test := range tests {
@@ -48,7 +58,9 @@ func TestInterpreter_Evaluate(t *testing.T) {
 			require.NoError(t, err)
 			stmts, err := parser.New(tokens).Parse()
 			require.NoError(t, err)
-			err = i.Interpret(stmts)
+
+			env := environment.New()
+			err = i.Interpret(env, stmts)
 
 			if test.ExpectedError != nil {
 				require.ErrorIs(t, err, test.ExpectedError)
