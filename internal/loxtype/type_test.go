@@ -26,7 +26,7 @@ func TestParseNumber(t *testing.T) {
 		t.Parallel()
 		s := []runes.Rune("3.14")
 		n := loxtype.ParseNumber(s)
-		assert.Equal(t, loxtype.Number(3.14), n)
+		assert.InEpsilon(t, 3.14, float64(n), 0.001)
 	})
 
 	t.Run("error", func(t *testing.T) {

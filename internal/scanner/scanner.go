@@ -59,7 +59,7 @@ func (s *Scanner) emitIdentifier() *token.Token {
 	}
 
 	text := string(s.source[s.start:s.current])
-	tokenType, ok := keywords[text]
+	tokenType, ok := keywords(text)
 	if !ok {
 		tokenType = token.TypeIdentifier
 	}
@@ -129,8 +129,8 @@ func (s *Scanner) match(expected runes.Rune) bool {
 	return true
 }
 
-func (s *Scanner) matchTernary(expected runes.Rune, t, f token.Type) token.Type {
-	if s.match(expected) {
+func (s *Scanner) ifMatchEqualSign(t, f token.Type) token.Type {
+	if s.match('=') {
 		return t
 	}
 	return f
@@ -152,12 +152,12 @@ func (s *Scanner) peekNext() runes.Rune {
 
 func (s *Scanner) scanToken() error {
 	var (
-		r   runes.Rune
+		r   = s.advance()
 		tok *token.Token
 		err error
 	)
 
-	switch r = s.advance(); r {
+	switch r {
 	case '(':
 		tok = s.emitToken(token.TypeLeftParen)
 	case ')':
@@ -179,42 +179,50 @@ func (s *Scanner) scanToken() error {
 	case '*':
 		tok = s.emitToken(token.TypeStar)
 	case '!':
-		tok = s.emitToken(s.matchTernary('=', token.TypeBangEqual, token.TypeBang))
+		tok = s.emitToken(s.ifMatchEqualSign(token.TypeBangEqual, token.TypeBang))
 	case '=':
-		tok = s.emitToken(s.matchTernary('=', token.TypeEqualEqual, token.TypeEqual))
+		tok = s.emitToken(s.ifMatchEqualSign(token.TypeEqualEqual, token.TypeEqual))
 	case '<':
-		tok = s.emitToken(s.matchTernary('=', token.TypeLessEqual, token.TypeLess))
+		tok = s.emitToken(s.ifMatchEqualSign(token.TypeLessEqual, token.TypeLess))
 	case '>':
-		tok = s.emitToken(s.matchTernary('=', token.TypeGreaterEqual, token.TypeGreater))
+		tok = s.emitToken(s.ifMatchEqualSign(token.TypeGreaterEqual, token.TypeGreater))
 	case '/':
-		if s.match('/') {
-			// A comment goes until the end of the line.
-			for s.peek() != '\n' && !s.isAtEnd() {
-				s.advance()
-			}
-		} else {
-			tok = s.emitToken(token.TypeSlash)
+		if tok = s.consumeComment(); tok == nil {
+			return nil
 		}
 	case ' ', '\r', '\t':
 		// Ignore whitespace.
-		break
+		return nil
 	case '\n':
 		s.line++
+		return nil
 	case '"':
 		if tok, err = s.emitString(); err != nil {
 			return err
 		}
-	default:
-		if r.IsDigit() {
-			tok = s.emitNumber()
-		} else if r.IsAlpha() {
-			tok = s.emitIdentifier()
-		} else {
-			return &ierrors.Error{Line: s.line, Err: ErrUnexpectedRune}
-		}
 	}
-	if tok != nil {
-		s.tokens = append(s.tokens, tok)
+
+	switch {
+	case r.IsDigit():
+		tok = s.emitNumber()
+	case r.IsAlpha():
+		tok = s.emitIdentifier()
 	}
+
+	if tok == nil {
+		return &ierrors.Error{Line: s.line, Err: ErrUnexpectedRune}
+	}
+	s.tokens = append(s.tokens, tok)
 	return nil
+}
+
+func (s *Scanner) consumeComment() *token.Token {
+	if s.match('/') {
+		// A comment goes until the end of the line.
+		for s.peek() != '\n' && !s.isAtEnd() {
+			s.advance()
+		}
+		return nil
+	}
+	return s.emitToken(token.TypeSlash)
 }

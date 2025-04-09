@@ -12,8 +12,10 @@ import (
 	"github.com/matt-hoiland/glox/internal/constants/exit"
 )
 
+const requiredArgCount int = 2
+
 func main() {
-	if len(os.Args) != 2 {
+	if len(os.Args) != requiredArgCount {
 		fmt.Fprintln(os.Stderr, "Usage: generate-ast <output director>")
 		os.Exit(exit.Usage)
 	}
@@ -64,10 +66,10 @@ func defineAST(outputDir, baseName string, productions ...string) {
 	}
 
 	path := path.Join(outputDir, strings.ToLower(baseName)+".go")
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
+	if err = os.MkdirAll(outputDir, 0755); err != nil {
 		panic(err)
 	}
-	if err := os.WriteFile(path, data, 0755); err != nil {
+	if err = os.WriteFile(path, data, 0644); err != nil { //nolint:gosec // Internal tool.
 		panic(err)
 	}
 }
@@ -90,7 +92,9 @@ func defineType(w io.Writer, baseName, typeName, fieldList string) {
 	fmt.Fprintln(w, "\t}")
 	fmt.Fprintln(w, "}")
 	fmt.Fprintln(w)
-	fmt.Fprintf(w, "func (e *%s%s) Accept(env *environment.Environment, visitor %sVisitor) (loxtype.Type, error) {\n", typeName, baseName, baseName)
+	fmt.Fprintf(w,
+		"func (e *%s%s) Accept(env *environment.Environment, visitor %sVisitor) (loxtype.Type, error) {\n",
+		typeName, baseName, baseName)
 	fmt.Fprintf(w, "\treturn visitor.Visit%s%s(env, e)\n", typeName, baseName)
 	fmt.Fprintln(w, "}")
 	fmt.Fprintln(w)
@@ -100,7 +104,9 @@ func defineVisitor(w io.Writer, baseName string, productions ...string) {
 	fmt.Fprintf(w, "type %sVisitor interface {\n", baseName)
 	for _, production := range productions {
 		typeName := strings.TrimSpace(strings.Split(production, ":")[0])
-		fmt.Fprintf(w, "\tVisit%s%s(*environment.Environment, *%s%s) (loxtype.Type, error)\n", typeName, baseName, typeName, baseName)
+		fmt.Fprintf(w,
+			"\tVisit%s%s(*environment.Environment, *%s%s) (loxtype.Type, error)\n",
+			typeName, baseName, typeName, baseName)
 	}
 	fmt.Fprintln(w, `}`)
 }

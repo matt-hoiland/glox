@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/matt-hoiland/glox/internal/constants/exit"
@@ -14,12 +15,13 @@ func main() {
 	args := os.Args[1:]
 
 	var err error
-	if len(args) > 1 {
-		fmt.Println("Usage: glox [script]")
+	switch {
+	case len(args) > 1:
+		fmt.Fprintln(os.Stdout, "Usage: glox [script]")
 		os.Exit(exit.Usage)
-	} else if len(args) == 1 {
+	case len(args) == 1:
 		err = runFile(args[0])
-	} else {
+	default:
 		err = runPrompt()
 	}
 	if err != nil {
@@ -28,22 +30,26 @@ func main() {
 	}
 }
 
-func runFile(filename string) (err error) {
-	var data []byte
+func runFile(filename string) error {
+	var (
+		data []byte
+		err  error
+	)
 	if data, err = os.ReadFile(filename); err != nil {
 		return fmt.Errorf("could not read file '%s': %w", filename, err)
 	}
-	return interpreter.New().Run(environment.New(), string(data))
+	return interpreter.New(os.Stdout).Run(environment.New(), string(data))
 }
 
 func runPrompt() error {
 	var (
-		i         = interpreter.New()
-		reader    = bufio.NewScanner(os.Stdin)
-		globalEnv = environment.New()
+		w         io.Writer = os.Stdout
+		i                   = interpreter.New(w)
+		reader              = bufio.NewScanner(os.Stdin)
+		globalEnv           = environment.New()
 	)
 	for {
-		fmt.Print("> ")
+		fmt.Fprint(os.Stdin, "> ")
 		if !reader.Scan() {
 			break
 		}

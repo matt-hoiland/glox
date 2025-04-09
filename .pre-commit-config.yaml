@@ -13,7 +13,6 @@ repos:
     -   id: go-imports
         args: [-local=github.com/matt-hoiland/glox]
     -   id: no-go-testing
-    -   id: golangci-lint
     -   id: go-unit-tests
 -   repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
     rev: v9.22.0
@@ -25,3 +24,7 @@ repos:
     rev: v0.6.1
     hooks:
     -   id: pre-commit-update
+-   repo: https://github.com/golangci/golangci-lint
+    rev: v2.0.2
+    hooks:
+    -   id: golangci-lint-full

@@ -34,7 +34,7 @@ func (ap Printer) parenthesize(env *environment.Environment, name string, expres
 	return loxtype.String(builder.String()), nil
 }
 
-func (ap Printer) VisitAssignExpr(_ *environment.Environment, e *AssignExpr) (loxtype.Type, error) {
+func (ap Printer) VisitAssignExpr(*environment.Environment, *AssignExpr) (loxtype.Type, error) {
 	panic("unimplemented")
 }
 
@@ -57,11 +57,11 @@ func (ap Printer) VisitUnaryExpr(env *environment.Environment, e *UnaryExpr) (lo
 	return ap.parenthesize(env, e.Operator.Lexeme, e.Right)
 }
 
-func (ap Printer) VisitVariableExpr(_ *environment.Environment, e *VariableExpr) (loxtype.Type, error) {
+func (ap Printer) VisitVariableExpr(*environment.Environment, *VariableExpr) (loxtype.Type, error) {
 	panic("unimplemented")
 }
 
-func (ap Printer) VisitBlockStmt(_ *environment.Environment, s *BlockStmt) (loxtype.Type, error) {
+func (ap Printer) VisitBlockStmt(*environment.Environment, *BlockStmt) (loxtype.Type, error) {
 	panic("unimplemented")
 }
 
@@ -75,6 +75,6 @@ func (ap Printer) VisitPrintStmt(env *environment.Environment, s *PrintStmt) (lo
 	return loxtype.String("print " + value.String() + ";"), nil
 }
 
-func (ap Printer) VisitVarStmt(_ *environment.Environment, s *VarStmt) (loxtype.Type, error) {
+func (ap Printer) VisitVarStmt(*environment.Environment, *VarStmt) (loxtype.Type, error) {
 	panic("unimplemented")
 }

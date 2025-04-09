@@ -99,7 +99,6 @@ func (p *Parser) previous() *token.Token {
 	return p.Tokens[p.Current-1]
 }
 
-//nolint:unused // This will be used in a future chapter.
 func (p *Parser) synchronize() {
 	p.advance()
 
@@ -118,6 +117,8 @@ func (p *Parser) synchronize() {
 			token.TypePrint,
 			token.TypeReturn:
 			return
+		default:
+			break
 		}
 
 		p.advance()
@@ -132,7 +133,11 @@ func (p *Parser) synchronize() {
 //
 //	declaration -> varDecl
 //	             | statement ;
-func (p *Parser) declaration() (stmt ast.Stmt, err error) {
+func (p *Parser) declaration() (ast.Stmt, error) {
+	var (
+		stmt ast.Stmt
+		err  error
+	)
 	defer func() {
 		if err != nil {
 			p.synchronize()
@@ -167,7 +172,7 @@ func (p *Parser) varDeclaration() (ast.Stmt, error) {
 		}
 	}
 
-	if _, err := p.consume(token.TypeSemicolon, ErrUnterminatedStatement); err != nil {
+	if _, err = p.consume(token.TypeSemicolon, ErrUnterminatedStatement); err != nil {
 		return nil, err
 	}
 
@@ -256,8 +261,8 @@ func (p *Parser) assignment() (ast.Expr, error) {
 
 	if p.match(token.TypeEqual) {
 		equals := p.previous()
-		value, err := p.assignment()
-		if err != nil {
+		var value ast.Expr
+		if value, err = p.assignment(); err != nil {
 			return nil, err
 		}
 
@@ -282,8 +287,8 @@ func (p *Parser) equality() (ast.Expr, error) {
 
 	for p.match(token.TypeBangEqual, token.TypeEqualEqual) {
 		operator := p.previous()
-		right, err := p.comparison()
-		if err != nil {
+		var right ast.Expr
+		if right, err = p.comparison(); err != nil {
 			return nil, err
 		}
 		left = ast.NewBinaryExpr(left, operator, right)
@@ -303,8 +308,8 @@ func (p *Parser) comparison() (ast.Expr, error) {
 
 	for p.match(token.TypeGreater, token.TypeGreaterEqual, token.TypeLess, token.TypeLessEqual) {
 		operator := p.previous()
-		right, err := p.term()
-		if err != nil {
+		var right ast.Expr
+		if right, err = p.term(); err != nil {
 			return nil, err
 		}
 		left = ast.NewBinaryExpr(left, operator, right)
@@ -324,8 +329,8 @@ func (p *Parser) term() (ast.Expr, error) {
 
 	for p.match(token.TypeMinus, token.TypePlus) {
 		operator := p.previous()
-		right, err := p.factor()
-		if err != nil {
+		var right ast.Expr
+		if right, err = p.factor(); err != nil {
 			return nil, err
 		}
 		left = ast.NewBinaryExpr(left, operator, right)
@@ -345,8 +350,8 @@ func (p *Parser) factor() (ast.Expr, error) {
 
 	for p.match(token.TypeSlash, token.TypeStar) {
 		operator := p.previous()
-		right, err := p.factor()
-		if err != nil {
+		var right ast.Expr
+		if right, err = p.factor(); err != nil {
 			return nil, err
 		}
 		left = ast.NewBinaryExpr(left, operator, right)
@@ -399,7 +404,7 @@ func (p *Parser) primary() (ast.Expr, error) {
 		if err != nil {
 			return nil, err
 		}
-		if _, err := p.consume(token.TypeRightParen, ErrUnterminatedExpression); err != nil {
+		if _, err = p.consume(token.TypeRightParen, ErrUnterminatedExpression); err != nil {
 			return nil, err
 		}
 		return ast.NewGroupingExpr(expression), nil

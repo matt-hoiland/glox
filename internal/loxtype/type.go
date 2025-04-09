@@ -31,7 +31,7 @@ func (b Boolean) Equals(other Type) Boolean {
 }
 
 func (b Boolean) Negate() Type {
-	return Boolean(!b)
+	return !b
 }
 
 func (b Boolean) String() string {
@@ -130,7 +130,7 @@ var (
 )
 
 func (s String) Add(right String) String {
-	return String(s + right)
+	return s + right
 }
 
 func (s String) Equals(other Type) Boolean {

@@ -3,6 +3,7 @@ package interpreter
 import (
 	"errors"
 	"fmt"
+	"io"
 
 	"github.com/matt-hoiland/glox/internal/ast"
 	"github.com/matt-hoiland/glox/internal/environment"
@@ -21,15 +22,17 @@ var (
 	ErrNonStringType  = fmt.Errorf("non-string %w", ErrType)
 )
 
-type Interpreter struct{}
+type Interpreter struct {
+	w io.Writer
+}
 
 var (
 	_ ast.ExprVisitor = (*Interpreter)(nil)
 	_ ast.StmtVisitor = (*Interpreter)(nil)
 )
 
-func New() *Interpreter {
-	return &Interpreter{}
+func New(w io.Writer) *Interpreter {
+	return &Interpreter{w}
 }
 
 func (i *Interpreter) Run(env *environment.Environment, code string) error {
@@ -69,6 +72,15 @@ func (i *Interpreter) execute(env *environment.Environment, s ast.Stmt) error {
 	return nil
 }
 
+func (i *Interpreter) executeBlock(env *environment.Environment, stmts []ast.Stmt) error {
+	for _, stmt := range stmts {
+		if err := i.execute(env, stmt); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (i *Interpreter) evaluate(env *environment.Environment, e ast.Expr) (loxtype.Type, error) {
 	return e.Accept(env, i)
 }
@@ -100,8 +112,11 @@ func (i *Interpreter) isTruthy(value loxtype.Type) loxtype.Boolean {
 	return true
 }
 
-func (*Interpreter) VisitBlockStmt(env *environment.Environment, s *ast.BlockStmt) (loxtype.Type, error) {
-	panic("unimplemented")
+func (i *Interpreter) VisitBlockStmt(env *environment.Environment, s *ast.BlockStmt) (loxtype.Type, error) {
+	if err := i.executeBlock(env.Enclose(), s.Statements); err != nil {
+		return nil, err
+	}
+	return nil, nil //nolint:nilnil // TODO: Emit final type?
 }
 
 func (i *Interpreter) VisitExpressionStmt(env *environment.Environment, s *ast.ExpressionStmt) (loxtype.Type, error) {
@@ -109,7 +124,7 @@ func (i *Interpreter) VisitExpressionStmt(env *environment.Environment, s *ast.E
 	if err != nil {
 		return nil, err
 	}
-	return nil, nil
+	return nil, nil //nolint:nilnil // TODO: Emit final type?
 }
 
 func (i *Interpreter) VisitPrintStmt(env *environment.Environment, s *ast.PrintStmt) (loxtype.Type, error) {
@@ -117,8 +132,8 @@ func (i *Interpreter) VisitPrintStmt(env *environment.Environment, s *ast.PrintS
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(value)
-	return nil, nil
+	fmt.Fprintln(i.w, value)
+	return nil, nil //nolint:nilnil // TODO: Emit final type?
 }
 
 func (i *Interpreter) VisitVarStmt(env *environment.Environment, s *ast.VarStmt) (loxtype.Type, error) {
@@ -133,7 +148,7 @@ func (i *Interpreter) VisitVarStmt(env *environment.Environment, s *ast.VarStmt)
 	}
 
 	env.Define(s.Name, value)
-	return nil, nil
+	return nil, nil //nolint:nilnil // TODO: Emit final type?
 }
 
 func (i *Interpreter) VisitAssignExpr(env *environment.Environment, e *ast.AssignExpr) (loxtype.Type, error) {
@@ -163,67 +178,99 @@ func (i *Interpreter) VisitBinaryExpr(env *environment.Environment, e *ast.Binar
 	case token.TypeEqualEqual:
 		return i.isEqual(left, right), nil
 	case token.TypeGreater:
-		a, b, err := convertBoth[loxtype.Number](left, right, ErrNonNumericType)
-		if err != nil {
-			return nil, fmt.Errorf("greater expression: %w", err)
-		}
-		return a.Greater(b), nil
+		return i.biopGreater(left, right)
 	case token.TypeGreaterEqual:
-		a, b, err := convertBoth[loxtype.Number](left, right, ErrNonNumericType)
-		if err != nil {
-			return nil, fmt.Errorf("greater-equal expression: %w", err)
-		}
-		return a.GreaterEqual(b), nil
+		return i.biopGreaterEqual(left, right)
 	case token.TypeLess:
-		a, b, err := convertBoth[loxtype.Number](left, right, ErrNonNumericType)
-		if err != nil {
-			return nil, fmt.Errorf("less expression: %w", err)
-		}
-		return a.Less(b), nil
+		return i.biopLess(left, right)
 	case token.TypeLessEqual:
-		a, b, err := convertBoth[loxtype.Number](left, right, ErrNonNumericType)
-		if err != nil {
-			return nil, fmt.Errorf("less-equal expression: %w", err)
-		}
-		return a.LessEqual(b), nil
+		return i.biopLessEqual(left, right)
 	case token.TypeMinus:
-		a, b, err := convertBoth[loxtype.Number](left, right, ErrNonNumericType)
-		if err != nil {
-			return nil, fmt.Errorf("minus expression: %w", err)
-		}
-		return a.Subtract(b), nil
+		return i.biopMinus(left, right)
 	case token.TypeSlash:
-		a, b, err := convertBoth[loxtype.Number](left, right, ErrNonNumericType)
-		if err != nil {
-			return nil, fmt.Errorf("slash expression: %w", err)
-		}
-		return a.Divide(b), nil
+		return i.biopSlash(left, right)
 	case token.TypeStar:
-		a, b, err := convertBoth[loxtype.Number](left, right, ErrNonNumericType)
-		if err != nil {
-			return nil, fmt.Errorf("star expression: %w", err)
-		}
-		return a.Multiply(b), nil
+		return i.biopStar(left, right)
 	case token.TypePlus:
-		na, nb, nErr := convertBoth[loxtype.Number](left, right, ErrNonNumericType)
-		sa, sb, sErr := convertBoth[loxtype.String](left, right, ErrNonStringType)
-		if nErr != nil && sErr != nil {
-			return nil, fmt.Errorf("operands to plus expression must be either string or numeric: %w", ErrType)
-		}
-		if nErr != nil {
-			return sa.Add(sb), nil
-		}
-		return na.Add(nb), nil
+		return i.biopPlus(left, right)
+	default:
+		return nil, ErrUnimplemented
 	}
+}
 
-	return nil, ErrUnimplemented
+func (*Interpreter) biopGreater(left, right loxtype.Type) (loxtype.Type, error) {
+	a, b, ok := convertBoth[loxtype.Number](left, right)
+	if !ok {
+		return nil, fmt.Errorf("greater expression: %w", ErrNonNumericType)
+	}
+	return a.Greater(b), nil
+}
+
+func (*Interpreter) biopGreaterEqual(left loxtype.Type, right loxtype.Type) (loxtype.Type, error) {
+	a, b, ok := convertBoth[loxtype.Number](left, right)
+	if !ok {
+		return nil, fmt.Errorf("greater-equal expression: %w", ErrNonNumericType)
+	}
+	return a.GreaterEqual(b), nil
+}
+
+func (*Interpreter) biopLess(left loxtype.Type, right loxtype.Type) (loxtype.Type, error) {
+	a, b, ok := convertBoth[loxtype.Number](left, right)
+	if !ok {
+		return nil, fmt.Errorf("less expression: %w", ErrNonNumericType)
+	}
+	return a.Less(b), nil
+}
+
+func (*Interpreter) biopLessEqual(left loxtype.Type, right loxtype.Type) (loxtype.Type, error) {
+	a, b, ok := convertBoth[loxtype.Number](left, right)
+	if !ok {
+		return nil, fmt.Errorf("less-equal expression: %w", ErrNonNumericType)
+	}
+	return a.LessEqual(b), nil
+}
+
+func (*Interpreter) biopMinus(left loxtype.Type, right loxtype.Type) (loxtype.Type, error) {
+	a, b, ok := convertBoth[loxtype.Number](left, right)
+	if !ok {
+		return nil, fmt.Errorf("minus expression: %w", ErrNonNumericType)
+	}
+	return a.Subtract(b), nil
+}
+
+func (*Interpreter) biopSlash(left loxtype.Type, right loxtype.Type) (loxtype.Type, error) {
+	a, b, ok := convertBoth[loxtype.Number](left, right)
+	if !ok {
+		return nil, fmt.Errorf("slash expression: %w", ErrNonNumericType)
+	}
+	return a.Divide(b), nil
+}
+
+func (*Interpreter) biopStar(left loxtype.Type, right loxtype.Type) (loxtype.Type, error) {
+	a, b, ok := convertBoth[loxtype.Number](left, right)
+	if !ok {
+		return nil, fmt.Errorf("star expression: %w", ErrNonNumericType)
+	}
+	return a.Multiply(b), nil
+}
+
+func (*Interpreter) biopPlus(left loxtype.Type, right loxtype.Type) (loxtype.Type, error) {
+	na, nb, nok := convertBoth[loxtype.Number](left, right)
+	sa, sb, sok := convertBoth[loxtype.String](left, right)
+	if !nok && !sok {
+		return nil, fmt.Errorf("operands to plus expression must be either string or numeric: %w", ErrType)
+	}
+	if !nok {
+		return sa.Add(sb), nil
+	}
+	return na.Add(nb), nil
 }
 
 func (i *Interpreter) VisitGroupingExpr(env *environment.Environment, e *ast.GroupingExpr) (loxtype.Type, error) {
 	return i.evaluate(env, e.Expression)
 }
 
-func (i *Interpreter) VisitLiteralExpr(env *environment.Environment, e *ast.LiteralExpr) (loxtype.Type, error) {
+func (i *Interpreter) VisitLiteralExpr(_ *environment.Environment, e *ast.LiteralExpr) (loxtype.Type, error) {
 	return e.Value, nil
 }
 
@@ -242,23 +289,23 @@ func (i *Interpreter) VisitUnaryExpr(env *environment.Environment, e *ast.UnaryE
 			return nil, fmt.Errorf("cannot apply minus operator: %w", ErrNonNumericType)
 		}
 		return n.Negate(), nil
+	default:
+		return nil, ErrUnimplemented
 	}
-
-	return nil, ErrUnimplemented
 }
 
 func (i *Interpreter) VisitVariableExpr(env *environment.Environment, e *ast.VariableExpr) (loxtype.Type, error) {
 	return env.Get(e.Name)
 }
 
-func convertBoth[T any](a, b loxtype.Type, err error) (T, T, error) {
+func convertBoth[T any](a, b loxtype.Type) (T, T, bool) {
 	at, aok := a.(T)
 	bt, bok := b.(T)
 	if !aok {
-		return at, bt, fmt.Errorf("type-error: left-hand operand: %w", err)
+		return at, bt, false
 	}
 	if !bok {
-		return at, bt, fmt.Errorf("type-error: right-hand operand: %w", err)
+		return at, bt, false
 	}
-	return at, bt, nil
+	return at, bt, true
 }

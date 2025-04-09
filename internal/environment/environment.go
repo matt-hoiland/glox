@@ -23,7 +23,7 @@ func (e *Environment) Assign(name *token.Token, value loxtype.Type) error {
 		return nil
 	}
 	if e.enclosing != nil {
-		return e.Assign(name, value)
+		return e.enclosing.Assign(name, value)
 	}
 	return ierrors.New(name, newUndefinedVariableError(name))
 }

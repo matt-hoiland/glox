@@ -1,7 +1,6 @@
 package parser_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -20,6 +19,6 @@ func TestParser_Parse(t *testing.T) {
 	var p ast.Printer
 
 	for _, s := range stmts {
-		fmt.Println(p.Print(s))
+		t.Log(p.Print(s))
 	}
 }

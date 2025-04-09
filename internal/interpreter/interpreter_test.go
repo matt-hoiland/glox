@@ -1,59 +1,115 @@
 package interpreter_test
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/matt-hoiland/glox/internal/environment"
 	"github.com/matt-hoiland/glox/internal/interpreter"
-	"github.com/matt-hoiland/glox/internal/loxtype"
 	"github.com/matt-hoiland/glox/internal/parser"
 	"github.com/matt-hoiland/glox/internal/scanner"
 )
 
 func TestInterpreter_Evaluate(t *testing.T) {
-	t.Parallel()
+	// t.Parallel()
 
 	type Test struct {
-		Name          string
-		Source        string
-		ExpectedValue loxtype.Type
-		ExpectedError error
+		Name           string
+		Source         string
+		ExpectedOutput string
+		ExpectedError  error
 	}
 
 	tests := []Test{
 		{
-			Name:          "success/negate_integer",
-			Source:        `- 4;`,
-			ExpectedValue: loxtype.Number(-4),
+			Name:           "success/negate_integer",
+			Source:         `print (- 4);`,
+			ExpectedOutput: "-4\n",
 		},
 		{
 			Name:          "error/negate_string",
-			Source:        `-"Hello";`,
+			Source:        `print (-"Hello");`,
 			ExpectedError: interpreter.ErrNonNumericType,
 		},
 		{
-			Name:          "success/truthiness/nil_is_falsey",
-			Source:        `!nil;`,
-			ExpectedValue: loxtype.Boolean(true),
+			Name:           "success/truthiness/nil_is_falsey",
+			Source:         `print (!nil);`,
+			ExpectedOutput: "true\n",
 		},
 		{
 			Name: "success/assignment",
 			Source: `
 			var a = "hello";
 			a = "world";
-			a;
+			print a;
 			`,
-			ExpectedValue: loxtype.String("world"),
+			ExpectedOutput: "world\n",
+		},
+		{
+			Name: "success/lexical_scope",
+			Source: `
+				var a = 4;
+				var shadowed = "shadow";
+				{
+					a = 6;
+					var shadowed = "block";
+					print shadowed;
+				}
+				print a;
+				print shadowed;
+			`,
+			ExpectedOutput: stripIndentation(`
+				block
+				6
+				shadow
+			`),
+		},
+		{
+			Name: "success/nystrom/lexical_scope",
+			Source: `
+				var a = "global a";
+				var b = "global b";
+				var c = "global c";
+				{
+					var a = "outer a";
+					var b = "outer b";
+					{
+						var a = "inner a";
+						print a;
+						print b;
+						print c;
+					}
+					print a;
+					print b;
+					print c;
+				}
+				print a;
+				print b;
+				print c;
+			`,
+			ExpectedOutput: stripIndentation(`
+				inner a
+				outer b
+				global c
+				outer a
+				outer b
+				global c
+				global a
+				global b
+				global c
+			`),
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
-			t.Parallel()
+			// t.Parallel()
 
-			i := &interpreter.Interpreter{}
+			var bob strings.Builder
+			i := interpreter.New(&bob)
 			tokens, err := scanner.New(test.Source).ScanTokens()
 			require.NoError(t, err)
 			stmts, err := parser.New(tokens).Parse()
@@ -68,6 +124,22 @@ func TestInterpreter_Evaluate(t *testing.T) {
 			}
 
 			require.NoError(t, err)
+			assert.Equal(t, test.ExpectedOutput, bob.String())
 		})
 	}
+}
+
+func stripIndentation(s string) string {
+	var (
+		bob             strings.Builder
+		passedFirstLine bool
+	)
+	for line := range strings.Lines(s) {
+		if !passedFirstLine {
+			passedFirstLine = true
+			continue
+		}
+		bob.WriteString(strings.TrimLeft(line, "\t "))
+	}
+	return bob.String()
 }
