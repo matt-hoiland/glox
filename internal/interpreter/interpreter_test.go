@@ -133,6 +133,23 @@ func TestInterpreter_Evaluate(t *testing.T) {
 				nil
 			`),
 		},
+		{
+			Name: "success/simple_while_loop",
+			Source: `
+			  var i = 0;
+				while (i < 5) {
+					print "Hello";
+					i = i + 1;
+				}
+			`,
+			ExpectedOutput: stripIndentation(`
+				Hello
+				Hello
+				Hello
+				Hello
+				Hello
+			`),
+		},
 	}
 
 	for _, test := range tests {

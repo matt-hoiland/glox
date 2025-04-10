@@ -41,6 +41,9 @@ func (p *Parser) assignment() (ast.Expr, error) {
 	return expr, nil
 }
 
+// or implements the production:
+//
+//	logic_or -> logic_and ( "or" logic_and )* ;
 func (p *Parser) or() (ast.Expr, error) {
 	expr, err := p.and()
 	if err != nil {
@@ -59,6 +62,9 @@ func (p *Parser) or() (ast.Expr, error) {
 	return expr, nil
 }
 
+// and implements the production:
+//
+//	logic_and -> equality ( "and" equality )* ;
 func (p *Parser) and() (ast.Expr, error) {
 	expr, err := p.equality()
 	if err != nil {

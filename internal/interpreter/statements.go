@@ -83,6 +83,23 @@ func (i *Interpreter) VisitVarStmt(env *environment.Environment, s *ast.VarStmt)
 	return nil, nil //nolint:nilnil // TODO: Emit final type?
 }
 
-func (*Interpreter) VisitWhileStmt(*environment.Environment, *ast.WhileStmt) (loxtype.Type, error) {
-	panic("unimplemented")
+func (i *Interpreter) VisitWhileStmt(env *environment.Environment, s *ast.WhileStmt) (loxtype.Type, error) {
+	var (
+		cond loxtype.Type
+		err  error
+	)
+
+	for {
+		if cond, err = i.evaluate(env, s.Condition); err != nil {
+			return nil, err
+		}
+		if !cond.IsTruthy() {
+			break
+		}
+		if err = i.execute(env, s.Body); err != nil {
+			return nil, err
+		}
+	}
+
+	return nil, nil //nolint:nilnil // TODO: Emit final type?
 }

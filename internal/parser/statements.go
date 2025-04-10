@@ -60,6 +60,7 @@ func (p *Parser) varDeclaration() (ast.Stmt, error) {
 //	statement -> exprStmt
 //	           | ifStmt
 //	           | printStmt
+//	           | whileStmt
 //	           | block ;
 func (p *Parser) statement() (ast.Stmt, error) {
 	switch {
@@ -68,6 +69,9 @@ func (p *Parser) statement() (ast.Stmt, error) {
 
 	case p.match(token.TypePrint):
 		return p.printStatement()
+
+	case p.match(token.TypeWhile):
+		return p.whileStatement()
 
 	case p.match(token.TypeLeftBrace):
 		stmts, err := p.block()
@@ -112,6 +116,46 @@ func (p *Parser) ifStatement() (ast.Stmt, error) {
 	return ast.NewIfStmt(condition, thenBranch, elseBranch), nil
 }
 
+// printStatement implements the production:
+//
+//	printStmt -> "print" expression ";" ;
+func (p *Parser) printStatement() (ast.Stmt, error) {
+	value, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+	if _, err = p.consume(token.TypeSemicolon, ErrUnterminatedStatement); err != nil {
+		return nil, err
+	}
+	return ast.NewPrintStmt(value), nil
+}
+
+// whileStatement implements the production:
+//
+//	whileStmt -> "while" "(" expression ")" statement ;
+func (p *Parser) whileStatement() (ast.Stmt, error) {
+	var (
+		condition ast.Expr
+		body      ast.Stmt
+		err       error
+	)
+
+	if _, err = p.consume(token.TypeLeftParen, ErrMissingOpeningParenthesis); err != nil {
+		return nil, err
+	}
+	if condition, err = p.expression(); err != nil {
+		return nil, err
+	}
+	if _, err = p.consume(token.TypeRightParen, ErrUnterminatedExpression); err != nil {
+		return nil, err
+	}
+	if body, err = p.statement(); err != nil {
+		return nil, err
+	}
+
+	return ast.NewWhileStmt(condition, body), nil
+}
+
 // block implements the production:
 //
 //	block -> "{" declaration* "}" ;
@@ -145,18 +189,4 @@ func (p *Parser) expressionStatement() (ast.Stmt, error) {
 		return nil, err
 	}
 	return ast.NewExpressionStmt(value), nil
-}
-
-// printStatement implements the production:
-//
-//	printStmt -> "print" expression ";" ;
-func (p *Parser) printStatement() (ast.Stmt, error) {
-	value, err := p.expression()
-	if err != nil {
-		return nil, err
-	}
-	if _, err = p.consume(token.TypeSemicolon, ErrUnterminatedStatement); err != nil {
-		return nil, err
-	}
-	return ast.NewPrintStmt(value), nil
 }
