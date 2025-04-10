@@ -11,7 +11,7 @@ import (
 var (
 	ErrNoVariableName            = errors.New("expect variable name")
 	ErrUnimplemented             = errors.New("unimplemented")
-	ErrMissingOpeningParenthesis = errors.New("expect '(' after 'if' or 'while'")
+	ErrMissingOpeningParenthesis = errors.New("expect '(' after 'if', 'while', or 'for'")
 	ErrUnterminatedExpression    = errors.New("expect ')' after expression")
 	ErrUnterminatedStatement     = errors.New("expect ';' after expression")
 	ErrUnterminatedBlock         = errors.New("expect '}' after block")

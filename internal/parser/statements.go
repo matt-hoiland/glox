@@ -1,7 +1,10 @@
 package parser
 
 import (
+	"errors"
+
 	"github.com/matt-hoiland/glox/internal/ast"
+	"github.com/matt-hoiland/glox/internal/loxtype"
 	"github.com/matt-hoiland/glox/internal/token"
 )
 
@@ -58,12 +61,16 @@ func (p *Parser) varDeclaration() (ast.Stmt, error) {
 // statement implements the production:
 //
 //	statement -> exprStmt
+//	           | forStmt
 //	           | ifStmt
 //	           | printStmt
 //	           | whileStmt
 //	           | block ;
 func (p *Parser) statement() (ast.Stmt, error) {
 	switch {
+	case p.match(token.TypeFor):
+		return p.forStatement()
+
 	case p.match(token.TypeIf):
 		return p.ifStatement()
 
@@ -84,6 +91,86 @@ func (p *Parser) statement() (ast.Stmt, error) {
 	default:
 		return p.expressionStatement()
 	}
+}
+
+// expressionStatement implements the production:
+//
+//	exprStmt -> expression ";" ;
+func (p *Parser) expressionStatement() (ast.Stmt, error) {
+	value, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+	if _, err = p.consume(token.TypeSemicolon, ErrUnterminatedStatement); err != nil {
+		return nil, err
+	}
+	return ast.NewExpressionStmt(value), nil
+}
+
+// forStatement implements the production:
+//
+//	forStmt -> "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
+func (p *Parser) forStatement() (ast.Stmt, error) {
+	var (
+		initializer ast.Stmt
+		condition   ast.Expr
+		increment   ast.Expr
+		body        ast.Stmt
+		err         error
+	)
+
+	if _, err = p.consume(token.TypeLeftParen, ErrMissingOpeningParenthesis); err != nil {
+		return nil, err
+	}
+
+	switch {
+	case p.match(token.TypeSemicolon):
+		break
+	case p.match(token.TypeVar):
+		initializer, err = p.varDeclaration()
+	default:
+		initializer, err = p.expressionStatement()
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if !p.check(token.TypeSemicolon) {
+		if condition, err = p.expression(); err != nil {
+			return nil, err
+		}
+	}
+	if _, err = p.consume(token.TypeSemicolon, errors.New("expect ';' after loop condition")); err != nil {
+		return nil, err
+	}
+
+	if !p.check(token.TypeRightParen) {
+		if increment, err = p.expression(); err != nil {
+			return nil, err
+		}
+	}
+	if _, err = p.consume(token.TypeRightParen, errors.New("expect ')' after for clauses")); err != nil {
+		return nil, err
+	}
+
+	if body, err = p.statement(); err != nil {
+		return nil, err
+	}
+
+	if increment != nil {
+		body = ast.NewBlockStmt([]ast.Stmt{body, ast.NewExpressionStmt(increment)})
+	}
+
+	if condition == nil {
+		condition = ast.NewLiteralExpr(loxtype.Boolean(true))
+	}
+	body = ast.NewWhileStmt(condition, body)
+
+	if initializer != nil {
+		body = ast.NewBlockStmt([]ast.Stmt{initializer, body})
+	}
+
+	return body, nil
 }
 
 // ifStatement implements the production:
@@ -175,18 +262,4 @@ func (p *Parser) block() ([]ast.Stmt, error) {
 	}
 
 	return stmts, nil
-}
-
-// expressionStatement implements the production:
-//
-//	exprStmt -> expression ";" ;
-func (p *Parser) expressionStatement() (ast.Stmt, error) {
-	value, err := p.expression()
-	if err != nil {
-		return nil, err
-	}
-	if _, err = p.consume(token.TypeSemicolon, ErrUnterminatedStatement); err != nil {
-		return nil, err
-	}
-	return ast.NewExpressionStmt(value), nil
 }

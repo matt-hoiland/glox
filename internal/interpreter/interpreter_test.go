@@ -123,12 +123,12 @@ func TestInterpreter_Evaluate(t *testing.T) {
 		{
 			Name: "success/short_circuiting",
 			Source: `
-			  print "hi" or 2;     // "hi".
+				print "hi" or 2;     // "hi".
 				print nil or "yes";  // "yes".
 				print nil and "bye"; // "nil".
 			`,
 			ExpectedOutput: stripIndentation(`
-			  hi
+				hi
 				yes
 				nil
 			`),
@@ -136,7 +136,7 @@ func TestInterpreter_Evaluate(t *testing.T) {
 		{
 			Name: "success/simple_while_loop",
 			Source: `
-			  var i = 0;
+				var i = 0;
 				while (i < 5) {
 					print "Hello";
 					i = i + 1;
@@ -148,6 +148,42 @@ func TestInterpreter_Evaluate(t *testing.T) {
 				Hello
 				Hello
 				Hello
+			`),
+		},
+		{
+			Name: "success/for_loop/fibonacci",
+			Source: `
+				var a = 0;
+				var temp;
+
+				for (var b = 1; a < 10000; b = temp + b) {
+					print a;
+					temp = a;
+					a = b;
+				}
+			`,
+			ExpectedOutput: stripIndentation(`
+				0
+				1
+				1
+				2
+				3
+				5
+				8
+				13
+				21
+				34
+				55
+				89
+				144
+				233
+				377
+				610
+				987
+				1597
+				2584
+				4181
+				6765
 			`),
 		},
 	}
