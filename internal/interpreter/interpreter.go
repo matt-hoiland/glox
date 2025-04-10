@@ -127,6 +127,24 @@ func (i *Interpreter) VisitExpressionStmt(env *environment.Environment, s *ast.E
 	return nil, nil //nolint:nilnil // TODO: Emit final type?
 }
 
+func (i *Interpreter) VisitIfStmt(env *environment.Environment, s *ast.IfStmt) (loxtype.Type, error) {
+	cond, err := i.evaluate(env, s.Condition)
+	if err != nil {
+		return nil, err
+	}
+
+	if i.isTruthy(cond) {
+		err = i.execute(env, s.ThenBranch)
+	} else if s.ElseBranch != nil {
+		err = i.execute(env, s.ElseBranch)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil //nolint:nilnil // TODO: Emit final type?
+}
+
 func (i *Interpreter) VisitPrintStmt(env *environment.Environment, s *ast.PrintStmt) (loxtype.Type, error) {
 	value, err := i.evaluate(env, s.Expression)
 	if err != nil {
@@ -149,6 +167,10 @@ func (i *Interpreter) VisitVarStmt(env *environment.Environment, s *ast.VarStmt)
 
 	env.Define(s.Name, value)
 	return nil, nil //nolint:nilnil // TODO: Emit final type?
+}
+
+func (*Interpreter) VisitWhileStmt(*environment.Environment, *ast.WhileStmt) (loxtype.Type, error) {
+	panic("unimplemented")
 }
 
 func (i *Interpreter) VisitAssignExpr(env *environment.Environment, e *ast.AssignExpr) (loxtype.Type, error) {
@@ -272,6 +294,25 @@ func (i *Interpreter) VisitGroupingExpr(env *environment.Environment, e *ast.Gro
 
 func (i *Interpreter) VisitLiteralExpr(_ *environment.Environment, e *ast.LiteralExpr) (loxtype.Type, error) {
 	return e.Value, nil
+}
+
+func (i *Interpreter) VisitLogicalExpr(env *environment.Environment, e *ast.LogicalExpr) (loxtype.Type, error) {
+	left, err := i.evaluate(env, e.Left)
+	if err != nil {
+		return nil, err
+	}
+
+	if e.Operator.Type == token.TypeOr {
+		if i.isTruthy(left) {
+			return left, nil
+		}
+	} else {
+		if !i.isTruthy(left) {
+			return left, nil
+		}
+	}
+
+	return i.evaluate(env, e.Right)
 }
 
 func (i *Interpreter) VisitUnaryExpr(env *environment.Environment, e *ast.UnaryExpr) (loxtype.Type, error) {

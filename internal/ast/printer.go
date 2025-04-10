@@ -53,6 +53,10 @@ func (ap Printer) VisitLiteralExpr(_ *environment.Environment, e *LiteralExpr) (
 	return e.Value, nil
 }
 
+func (Printer) VisitLogicalExpr(*environment.Environment, *LogicalExpr) (loxtype.Type, error) {
+	panic("unimplemented")
+}
+
 func (ap Printer) VisitUnaryExpr(env *environment.Environment, e *UnaryExpr) (loxtype.Type, error) {
 	return ap.parenthesize(env, e.Operator.Lexeme, e.Right)
 }
@@ -70,11 +74,19 @@ func (ap Printer) VisitExpressionStmt(env *environment.Environment, s *Expressio
 	return loxtype.String(value.String() + ";"), nil
 }
 
+func (ap Printer) VisitIfStmt(*environment.Environment, *IfStmt) (loxtype.Type, error) {
+	panic("unimplemented")
+}
+
 func (ap Printer) VisitPrintStmt(env *environment.Environment, s *PrintStmt) (loxtype.Type, error) {
 	value, _ := s.Expression.Accept(env, ap)
 	return loxtype.String("print " + value.String() + ";"), nil
 }
 
 func (ap Printer) VisitVarStmt(*environment.Environment, *VarStmt) (loxtype.Type, error) {
+	panic("unimplemented")
+}
+
+func (Printer) VisitWhileStmt(*environment.Environment, *WhileStmt) (loxtype.Type, error) {
 	panic("unimplemented")
 }

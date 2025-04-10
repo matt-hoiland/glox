@@ -14,8 +14,10 @@ type Stmt interface {
 type StmtVisitor interface {
 	VisitBlockStmt(*environment.Environment, *BlockStmt) (loxtype.Type, error)
 	VisitExpressionStmt(*environment.Environment, *ExpressionStmt) (loxtype.Type, error)
+	VisitIfStmt(*environment.Environment, *IfStmt) (loxtype.Type, error)
 	VisitPrintStmt(*environment.Environment, *PrintStmt) (loxtype.Type, error)
 	VisitVarStmt(*environment.Environment, *VarStmt) (loxtype.Type, error)
+	VisitWhileStmt(*environment.Environment, *WhileStmt) (loxtype.Type, error)
 }
 
 type BlockStmt struct {
@@ -50,6 +52,26 @@ func (e *ExpressionStmt) Accept(env *environment.Environment, visitor StmtVisito
 	return visitor.VisitExpressionStmt(env, e)
 }
 
+type IfStmt struct {
+	Condition  Expr
+	ThenBranch Stmt
+	ElseBranch Stmt
+}
+
+var _ Stmt = (*IfStmt)(nil)
+
+func NewIfStmt(Condition Expr, ThenBranch Stmt, ElseBranch Stmt) *IfStmt {
+	return &IfStmt{
+		Condition:  Condition,
+		ThenBranch: ThenBranch,
+		ElseBranch: ElseBranch,
+	}
+}
+
+func (e *IfStmt) Accept(env *environment.Environment, visitor StmtVisitor) (loxtype.Type, error) {
+	return visitor.VisitIfStmt(env, e)
+}
+
 type PrintStmt struct {
 	Expression Expr
 }
@@ -82,4 +104,22 @@ func NewVarStmt(Name *token.Token, Initializer Expr) *VarStmt {
 
 func (e *VarStmt) Accept(env *environment.Environment, visitor StmtVisitor) (loxtype.Type, error) {
 	return visitor.VisitVarStmt(env, e)
+}
+
+type WhileStmt struct {
+	Condition Expr
+	Body      Stmt
+}
+
+var _ Stmt = (*WhileStmt)(nil)
+
+func NewWhileStmt(Condition Expr, Body Stmt) *WhileStmt {
+	return &WhileStmt{
+		Condition: Condition,
+		Body:      Body,
+	}
+}
+
+func (e *WhileStmt) Accept(env *environment.Environment, visitor StmtVisitor) (loxtype.Type, error) {
+	return visitor.VisitWhileStmt(env, e)
 }

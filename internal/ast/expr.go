@@ -16,6 +16,7 @@ type ExprVisitor interface {
 	VisitBinaryExpr(*environment.Environment, *BinaryExpr) (loxtype.Type, error)
 	VisitGroupingExpr(*environment.Environment, *GroupingExpr) (loxtype.Type, error)
 	VisitLiteralExpr(*environment.Environment, *LiteralExpr) (loxtype.Type, error)
+	VisitLogicalExpr(*environment.Environment, *LogicalExpr) (loxtype.Type, error)
 	VisitUnaryExpr(*environment.Environment, *UnaryExpr) (loxtype.Type, error)
 	VisitVariableExpr(*environment.Environment, *VariableExpr) (loxtype.Type, error)
 }
@@ -88,6 +89,26 @@ func NewLiteralExpr(Value loxtype.Type) *LiteralExpr {
 
 func (e *LiteralExpr) Accept(env *environment.Environment, visitor ExprVisitor) (loxtype.Type, error) {
 	return visitor.VisitLiteralExpr(env, e)
+}
+
+type LogicalExpr struct {
+	Left     Expr
+	Operator *token.Token
+	Right    Expr
+}
+
+var _ Expr = (*LogicalExpr)(nil)
+
+func NewLogicalExpr(Left Expr, Operator *token.Token, Right Expr) *LogicalExpr {
+	return &LogicalExpr{
+		Left:     Left,
+		Operator: Operator,
+		Right:    Right,
+	}
+}
+
+func (e *LogicalExpr) Accept(env *environment.Environment, visitor ExprVisitor) (loxtype.Type, error) {
+	return visitor.VisitLogicalExpr(env, e)
 }
 
 type UnaryExpr struct {

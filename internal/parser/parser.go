@@ -10,11 +10,12 @@ import (
 )
 
 var (
-	ErrNoVariableName         = errors.New("expect variable name")
-	ErrUnimplemented          = errors.New("unimplemented")
-	ErrUnterminatedExpression = errors.New("expect ')' after expression")
-	ErrUnterminatedStatement  = errors.New("expect ';' after expression")
-	ErrUnterminatedBlock      = errors.New("expect '}' after block")
+	ErrNoVariableName            = errors.New("expect variable name")
+	ErrUnimplemented             = errors.New("unimplemented")
+	ErrMissingOpeningParenthesis = errors.New("expect '(' after 'if'")
+	ErrUnterminatedExpression    = errors.New("expect ')' after expression")
+	ErrUnterminatedStatement     = errors.New("expect ';' after expression")
+	ErrUnterminatedBlock         = errors.New("expect '}' after block")
 )
 
 type Parser struct {
@@ -182,21 +183,58 @@ func (p *Parser) varDeclaration() (ast.Stmt, error) {
 // statement implements the production:
 //
 //	statement -> exprStmt
+//	           | ifStmt
 //	           | printStmt
 //	           | block ;
 func (p *Parser) statement() (ast.Stmt, error) {
-	if p.match(token.TypePrint) {
+	switch {
+	case p.match(token.TypeIf):
+		return p.ifStatement()
+
+	case p.match(token.TypePrint):
 		return p.printStatement()
-	}
-	if p.match(token.TypeLeftBrace) {
+
+	case p.match(token.TypeLeftBrace):
 		stmts, err := p.block()
 		if err != nil {
 			return nil, err
 		}
 		block := ast.NewBlockStmt(stmts)
 		return block, nil
+
+	default:
+		return p.expressionStatement()
 	}
-	return p.expressionStatement()
+}
+
+// ifStatement implements the production:
+//
+//	ifStmt -> "if" "(" expression ")" statement ( "else" statement )? ;
+func (p *Parser) ifStatement() (ast.Stmt, error) {
+	if _, err := p.consume(token.TypeLeftParen, ErrMissingOpeningParenthesis); err != nil {
+		return nil, err
+	}
+
+	condition, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err = p.consume(token.TypeRightParen, ErrUnterminatedExpression); err != nil {
+		return nil, err
+	}
+
+	var thenBranch, elseBranch ast.Stmt
+	if thenBranch, err = p.statement(); err != nil {
+		return nil, err
+	}
+	if p.match(token.TypeElse) {
+		if elseBranch, err = p.statement(); err != nil {
+			return nil, err
+		}
+	}
+
+	return ast.NewIfStmt(condition, thenBranch, elseBranch), nil
 }
 
 // block implements the production:
@@ -254,7 +292,7 @@ func (p *Parser) expression() (ast.Expr, error) {
 //	assignment -> IDENTIFIER "=" assignment
 //	            | equality ;
 func (p *Parser) assignment() (ast.Expr, error) {
-	expr, err := p.equality()
+	expr, err := p.or()
 	if err != nil {
 		return nil, err
 	}
@@ -273,6 +311,42 @@ func (p *Parser) assignment() (ast.Expr, error) {
 
 		return nil, ierrors.New(equals, nil)
 	}
+	return expr, nil
+}
+
+func (p *Parser) or() (ast.Expr, error) {
+	expr, err := p.and()
+	if err != nil {
+		return nil, err
+	}
+
+	for p.match(token.TypeOr) {
+		operator := p.previous()
+		var right ast.Expr
+		if right, err = p.and(); err != nil {
+			return nil, err
+		}
+		expr = ast.NewLogicalExpr(expr, operator, right)
+	}
+
+	return expr, nil
+}
+
+func (p *Parser) and() (ast.Expr, error) {
+	expr, err := p.equality()
+	if err != nil {
+		return nil, err
+	}
+
+	for p.match(token.TypeAnd) {
+		operator := p.previous()
+		var right ast.Expr
+		if right, err = p.equality(); err != nil {
+			return nil, err
+		}
+		expr = ast.NewLogicalExpr(expr, operator, right)
+	}
+
 	return expr, nil
 }
 

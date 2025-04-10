@@ -102,6 +102,37 @@ func TestInterpreter_Evaluate(t *testing.T) {
 				global c
 			`),
 		},
+		{
+			Name: "success/if_statements",
+			Source: `
+				if (true) {
+					print "Hello";
+				}
+
+				if (false) {
+					print "Matt!";
+				} else {
+					print "World!";
+				}
+			`,
+			ExpectedOutput: stripIndentation(`
+				Hello
+				World!
+			`),
+		},
+		{
+			Name: "success/short_circuiting",
+			Source: `
+			  print "hi" or 2;     // "hi".
+				print nil or "yes";  // "yes".
+				print nil and "bye"; // "nil".
+			`,
+			ExpectedOutput: stripIndentation(`
+			  hi
+				yes
+				nil
+			`),
+		},
 	}
 
 	for _, test := range tests {
