@@ -80,9 +80,8 @@ func (s *Scanner) emitNumber() *token.Token {
 			s.advance()
 		}
 	}
-	number := loxtype.ParseNumber(s.source[s.start:s.current])
 
-	return s.emitToken(token.TypeNumber, number)
+	return s.emitToken(token.TypeNumber, loxtype.ParseNumber(s.source[s.start:s.current]))
 }
 
 func (s *Scanner) emitString() (*token.Token, error) {
@@ -98,11 +97,10 @@ func (s *Scanner) emitString() (*token.Token, error) {
 	}
 
 	s.advance()
-	value := loxtype.String(s.source[s.start+1 : s.current-1])
-	return s.emitToken(token.TypeString, value), nil
+	return s.emitToken(token.TypeString, loxtype.String(s.source[s.start+1:s.current-1])), nil
 }
 
-func (s *Scanner) emitToken(tokenType token.Type, literal ...token.Literal) *token.Token {
+func (s *Scanner) emitToken(tokenType token.Type, literal ...loxtype.Type) *token.Token {
 	token := &token.Token{
 		Type:   tokenType,
 		Lexeme: string(s.source[s.start:s.current]),

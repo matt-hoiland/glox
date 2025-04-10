@@ -9,17 +9,14 @@ import (
 
 type Type interface {
 	fmt.Stringer
-}
-
-type Equalser interface {
 	Equals(Type) Boolean
+	IsTruthy() Boolean
 }
 
 type Boolean bool
 
 var (
-	_ Type     = Boolean(false)
-	_ Equalser = Boolean(false)
+	_ Type = Boolean(false)
 )
 
 func (b Boolean) Equals(other Type) Boolean {
@@ -28,6 +25,10 @@ func (b Boolean) Equals(other Type) Boolean {
 		return false
 	}
 	return b == bo
+}
+
+func (b Boolean) IsTruthy() Boolean {
+	return b
 }
 
 func (b Boolean) Negate() Type {
@@ -43,10 +44,7 @@ func (b Boolean) String() string {
 
 type Nil struct{}
 
-var (
-	_ Type     = Nil{}
-	_ Equalser = Nil{}
-)
+var _ Type = Nil{}
 
 func (n Nil) Equals(other Type) Boolean {
 	if _, ok := other.(Nil); !ok {
@@ -55,16 +53,17 @@ func (n Nil) Equals(other Type) Boolean {
 	return true
 }
 
+func (Nil) IsTruthy() Boolean {
+	return false
+}
+
 func (n Nil) String() string {
 	return "nil"
 }
 
 type Number float64
 
-var (
-	_ Type     = Number(0)
-	_ Equalser = Number(0)
-)
+var _ Type = Number(0)
 
 func ParseNumber(text []runes.Rune) Number {
 	f64, err := strconv.ParseFloat(string(text), 64)
@@ -75,11 +74,11 @@ func ParseNumber(text []runes.Rune) Number {
 }
 
 func (n Number) Add(right Number) Number {
-	return Number(n + right)
+	return n + right
 }
 
 func (n Number) Divide(right Number) Number {
-	return Number(n / right)
+	return n / right
 }
 
 func (n Number) Equals(other Type) Boolean {
@@ -91,27 +90,31 @@ func (n Number) Equals(other Type) Boolean {
 }
 
 func (n Number) Greater(right Number) Boolean {
-	return Boolean(n > right)
+	return n > right
 }
 
 func (n Number) GreaterEqual(right Number) Boolean {
-	return Boolean(n >= right)
+	return n >= right
+}
+
+func (Number) IsTruthy() Boolean {
+	return true
 }
 
 func (n Number) Less(right Number) Boolean {
-	return Boolean(n < right)
+	return n < right
 }
 
 func (n Number) LessEqual(right Number) Boolean {
-	return Boolean(n <= right)
+	return n <= right
 }
 
 func (n Number) Multiply(right Number) Number {
-	return Number(n * right)
+	return n * right
 }
 
 func (n Number) Negate() Type {
-	return Number(-1 * n)
+	return -n
 }
 
 func (n Number) String() string {
@@ -119,15 +122,12 @@ func (n Number) String() string {
 }
 
 func (n Number) Subtract(right Number) Number {
-	return Number(n - right)
+	return n - right
 }
 
 type String string
 
-var (
-	_ Type     = String("")
-	_ Equalser = String("")
-)
+var _ Type = String("")
 
 func (s String) Add(right String) String {
 	return s + right
@@ -139,6 +139,10 @@ func (s String) Equals(other Type) Boolean {
 		return false
 	}
 	return s == ns
+}
+
+func (String) IsTruthy() Boolean {
+	return true
 }
 
 func (s String) String() string {
