@@ -22,11 +22,23 @@ type Scanner struct {
 	line    int
 }
 
-func New(source string) *Scanner {
-	return &Scanner{
+type Option func(*Scanner)
+
+func WithStartingLine(line int) Option {
+	return func(s *Scanner) {
+		s.line = line
+	}
+}
+
+func New(source string, opts ...Option) *Scanner {
+	s := &Scanner{
 		source: []runes.Rune(source),
 		line:   1,
 	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
 }
 
 func (s *Scanner) ScanTokens() ([]*token.Token, error) {

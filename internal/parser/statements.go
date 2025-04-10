@@ -101,6 +101,9 @@ func (p *Parser) expressionStatement() (ast.Stmt, error) {
 	if err != nil {
 		return nil, err
 	}
+	if p.replMode && p.peek().Type == token.TypeEOF {
+		return ast.NewExpressionStmt(value), nil
+	}
 	if _, err = p.consume(token.TypeSemicolon, ErrUnterminatedStatement); err != nil {
 		return nil, err
 	}

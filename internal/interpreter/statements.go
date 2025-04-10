@@ -18,7 +18,7 @@ func (i *Interpreter) execute(env *environment.Environment, s ast.Stmt) error {
 }
 
 func (i *Interpreter) VisitBlockStmt(env *environment.Environment, s *ast.BlockStmt) (loxtype.Type, error) {
-	if err := i.executeBlock(env.Enclose(), s.Statements); err != nil {
+	if err := i.executeBlock(env.MakeChild(), s.Statements); err != nil {
 		return nil, err
 	}
 	return nil, nil //nolint:nilnil // TODO: Emit final type?

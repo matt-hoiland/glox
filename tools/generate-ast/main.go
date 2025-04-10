@@ -23,6 +23,7 @@ func main() {
 	defineAST(outputDir, "Expr",
 		"Assign   : Name *token.Token, Value Expr",
 		"Binary   : Left Expr, Operator *token.Token, Right Expr",
+		"Call     : Callee Expr, paren *token.Token, Arguments []Expr",
 		"Grouping : Expression Expr",
 		"Literal  : Value loxtype.Type",
 		"Logical  : Left Expr, Operator *token.Token, Right Expr",

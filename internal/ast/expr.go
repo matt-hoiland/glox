@@ -14,6 +14,7 @@ type Expr interface {
 type ExprVisitor interface {
 	VisitAssignExpr(*environment.Environment, *AssignExpr) (loxtype.Type, error)
 	VisitBinaryExpr(*environment.Environment, *BinaryExpr) (loxtype.Type, error)
+	VisitCallExpr(*environment.Environment, *CallExpr) (loxtype.Type, error)
 	VisitGroupingExpr(*environment.Environment, *GroupingExpr) (loxtype.Type, error)
 	VisitLiteralExpr(*environment.Environment, *LiteralExpr) (loxtype.Type, error)
 	VisitLogicalExpr(*environment.Environment, *LogicalExpr) (loxtype.Type, error)
@@ -57,6 +58,26 @@ func NewBinaryExpr(Left Expr, Operator *token.Token, Right Expr) *BinaryExpr {
 
 func (e *BinaryExpr) Accept(env *environment.Environment, visitor ExprVisitor) (loxtype.Type, error) {
 	return visitor.VisitBinaryExpr(env, e)
+}
+
+type CallExpr struct {
+	Callee    Expr
+	paren     *token.Token
+	Arguments []Expr
+}
+
+var _ Expr = (*CallExpr)(nil)
+
+func NewCallExpr(Callee Expr, paren *token.Token, Arguments []Expr) *CallExpr {
+	return &CallExpr{
+		Callee:    Callee,
+		paren:     paren,
+		Arguments: Arguments,
+	}
+}
+
+func (e *CallExpr) Accept(env *environment.Environment, visitor ExprVisitor) (loxtype.Type, error) {
+	return visitor.VisitCallExpr(env, e)
 }
 
 type GroupingExpr struct {

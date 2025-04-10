@@ -142,6 +142,38 @@ func convertBoth[T any](a, b loxtype.Type) (T, T, bool) {
 	return at, bt, true
 }
 
+func (i *Interpreter) VisitCallExpr(env *environment.Environment, e *ast.CallExpr) (loxtype.Type, error) {
+	var (
+		callee    loxtype.Type
+		arguments []loxtype.Type
+		function  Callable
+		ok        bool
+		err       error
+	)
+
+	if callee, err = i.evaluate(env, e.Callee); err != nil {
+		return nil, err
+	}
+
+	for _, argExpr := range e.Arguments {
+		var arg loxtype.Type
+		if arg, err = i.evaluate(env, argExpr); err != nil {
+			return nil, err
+		}
+		arguments = append(arguments, arg)
+	}
+
+	if function, ok = callee.(Callable); !ok {
+		return nil, fmt.Errorf("%s not a callable: can only call functions and classes", function)
+	}
+
+	if len(arguments) != function.Arity() {
+		return nil, fmt.Errorf("expected %d arguments but got %d", function.Arity(), len(arguments))
+	}
+
+	return function.Call(i, arguments)
+}
+
 func (i *Interpreter) VisitGroupingExpr(env *environment.Environment, e *ast.GroupingExpr) (loxtype.Type, error) {
 	return i.evaluate(env, e.Expression)
 }

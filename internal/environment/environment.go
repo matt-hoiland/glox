@@ -32,12 +32,6 @@ func (e *Environment) Define(name *token.Token, value loxtype.Type) {
 	e.values[name.Lexeme] = value
 }
 
-func (e *Environment) Enclose() *Environment {
-	child := New()
-	child.enclosing = e
-	return child
-}
-
 func (e *Environment) Get(name *token.Token) (loxtype.Type, error) {
 	value, ok := e.values[name.Lexeme]
 	if ok {
@@ -47,4 +41,10 @@ func (e *Environment) Get(name *token.Token) (loxtype.Type, error) {
 		return e.enclosing.Get(name)
 	}
 	return nil, ierrors.New(name, newUndefinedVariableError(name))
+}
+
+func (e *Environment) MakeChild() *Environment {
+	child := New()
+	child.enclosing = e
+	return child
 }

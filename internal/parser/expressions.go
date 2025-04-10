@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"errors"
+
 	"github.com/matt-hoiland/glox/internal/ast"
 	ierrors "github.com/matt-hoiland/glox/internal/errors"
 	"github.com/matt-hoiland/glox/internal/loxtype"
@@ -169,8 +171,7 @@ func (p *Parser) factor() (ast.Expr, error) {
 
 // unary implements the production:
 //
-//	unary -> ( "!" | "-" ) unary
-//	       | primary ;
+//	unary -> ( "!" | "-" ) unary | call ;
 func (p *Parser) unary() (ast.Expr, error) {
 	if p.match(token.TypeBang, token.TypeMinus) {
 		operator := p.previous()
@@ -181,7 +182,62 @@ func (p *Parser) unary() (ast.Expr, error) {
 		return ast.NewUnaryExpr(operator, right), nil
 	}
 
-	return p.primary()
+	return p.call()
+}
+
+// call implements the productions:
+//
+//	call      -> primary ( "(" arguments? ")" )* ;
+//	arguments -> expression ( "," expression )* ;
+func (p *Parser) call() (ast.Expr, error) {
+	var (
+		expr ast.Expr
+		err  error
+	)
+
+	if expr, err = p.primary(); err != nil {
+		return nil, err
+	}
+
+	for {
+		if p.match(token.TypeLeftParen) {
+			if expr, err = p.finishCall(expr); err != nil {
+				return nil, err
+			}
+		} else {
+			break
+		}
+	}
+
+	return expr, nil
+}
+
+func (p *Parser) finishCall(callee ast.Expr) (ast.Expr, error) {
+	var (
+		arg       ast.Expr
+		arguments []ast.Expr
+		paren     *token.Token
+		err       error
+	)
+
+	if !p.check(token.TypeRightParen) {
+		for {
+			if arg, err = p.expression(); err != nil {
+				return nil, err
+			}
+			// TODO: check for maximum argument size at 255
+			arguments = append(arguments, arg)
+			if !p.match(token.TypeComma) {
+				break
+			}
+		}
+	}
+
+	if paren, err = p.consume(token.TypeRightParen, errors.New("expect ')' after arguments")); err != nil {
+		return nil, err
+	}
+
+	return ast.NewCallExpr(callee, paren, arguments), nil
 }
 
 // primary implements the production:

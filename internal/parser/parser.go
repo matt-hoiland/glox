@@ -18,15 +18,28 @@ var (
 )
 
 type Parser struct {
-	Tokens  []*token.Token
-	Current int
+	tokens   []*token.Token
+	current  int
+	replMode bool
 }
 
-func New(tokens []*token.Token) *Parser {
-	return &Parser{
-		Tokens:  tokens,
-		Current: 0,
+type Option func(*Parser)
+
+func InREPLMode() Option {
+	return func(p *Parser) {
+		p.replMode = true
 	}
+}
+
+func New(tokens []*token.Token, opts ...Option) *Parser {
+	p := &Parser{
+		tokens:  tokens,
+		current: 0,
+	}
+	for _, opt := range opts {
+		opt(p)
+	}
+	return p
 }
 
 func (p *Parser) Parse() ([]ast.Stmt, error) {
@@ -45,7 +58,7 @@ func (p *Parser) Parse() ([]ast.Stmt, error) {
 // This is similar to how [scanner.Scanner]'s corresponding method crawled through characters.
 func (p *Parser) advance() *token.Token {
 	if !p.isAtEnd() {
-		p.Current++
+		p.current++
 	}
 	return p.previous()
 }
@@ -87,12 +100,12 @@ func (p *Parser) match(tokenTypes ...token.Type) bool {
 
 // peek returns the current token we have yet to consume.
 func (p *Parser) peek() *token.Token {
-	return p.Tokens[p.Current]
+	return p.tokens[p.current]
 }
 
 // previous returns the most recently consumed token.
 func (p *Parser) previous() *token.Token {
-	return p.Tokens[p.Current-1]
+	return p.tokens[p.current-1]
 }
 
 func (p *Parser) synchronize() {

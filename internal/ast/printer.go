@@ -61,6 +61,10 @@ func (ap Printer) VisitUnaryExpr(env *environment.Environment, e *UnaryExpr) (lo
 	return ap.parenthesize(env, e.Operator.Lexeme, e.Right)
 }
 
+func (Printer) VisitCallExpr(*environment.Environment, *CallExpr) (loxtype.Type, error) {
+	panic("unimplemented")
+}
+
 func (ap Printer) VisitVariableExpr(*environment.Environment, *VariableExpr) (loxtype.Type, error) {
 	panic("unimplemented")
 }

@@ -7,14 +7,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/matt-hoiland/glox/internal/environment"
 	"github.com/matt-hoiland/glox/internal/interpreter"
-	"github.com/matt-hoiland/glox/internal/parser"
-	"github.com/matt-hoiland/glox/internal/scanner"
 )
 
 func TestInterpreter_Evaluate(t *testing.T) {
-	// t.Parallel()
+	t.Parallel()
 
 	type Test struct {
 		Name           string
@@ -186,21 +183,26 @@ func TestInterpreter_Evaluate(t *testing.T) {
 				6765
 			`),
 		},
+		{
+			Name: "success/function_call/clock",
+			Source: `
+				var mils = clock();
+				if (mils > 0) {
+					print "success";
+				}
+			`,
+			ExpectedOutput: stripIndentation(`
+				success
+			`),
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
-			// t.Parallel()
+			t.Parallel()
 
 			var bob strings.Builder
-			i := interpreter.New(&bob)
-			tokens, err := scanner.New(test.Source).ScanTokens()
-			require.NoError(t, err)
-			stmts, err := parser.New(tokens).Parse()
-			require.NoError(t, err)
-
-			env := environment.New()
-			err = i.Interpret(env, stmts)
+			err := interpreter.New(&bob).Run(test.Source)
 
 			if test.ExpectedError != nil {
 				require.ErrorIs(t, err, test.ExpectedError)
