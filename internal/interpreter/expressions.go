@@ -146,7 +146,7 @@ func (i *Interpreter) VisitCallExpr(env *environment.Environment, e *ast.CallExp
 	var (
 		callee    loxtype.Type
 		arguments []loxtype.Type
-		function  Callable
+		function  callable
 		ok        bool
 		err       error
 	)
@@ -163,7 +163,7 @@ func (i *Interpreter) VisitCallExpr(env *environment.Environment, e *ast.CallExp
 		arguments = append(arguments, arg)
 	}
 
-	if function, ok = callee.(Callable); !ok {
+	if function, ok = callee.(callable); !ok {
 		return nil, fmt.Errorf("%s not a callable: can only call functions and classes", function)
 	}
 
@@ -171,7 +171,7 @@ func (i *Interpreter) VisitCallExpr(env *environment.Environment, e *ast.CallExp
 		return nil, fmt.Errorf("expected %d arguments but got %d", function.Arity(), len(arguments))
 	}
 
-	return function.Call(i, arguments)
+	return function.Call(env, i, arguments)
 }
 
 func (i *Interpreter) VisitGroupingExpr(env *environment.Environment, e *ast.GroupingExpr) (loxtype.Type, error) {

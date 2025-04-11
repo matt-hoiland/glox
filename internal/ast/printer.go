@@ -78,6 +78,10 @@ func (ap Printer) VisitExpressionStmt(env *environment.Environment, s *Expressio
 	return loxtype.String(value.String() + ";"), nil
 }
 
+func (Printer) VisitFunctionStmt(*environment.Environment, *FunctionStmt) (loxtype.Type, error) {
+	panic("unimplemented")
+}
+
 func (ap Printer) VisitIfStmt(*environment.Environment, *IfStmt) (loxtype.Type, error) {
 	panic("unimplemented")
 }

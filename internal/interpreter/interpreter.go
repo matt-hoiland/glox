@@ -24,30 +24,6 @@ var (
 	ErrNonStringType  = fmt.Errorf("non-string %w", ErrType)
 )
 
-type Callable interface {
-	loxtype.Type
-	Arity() int
-	Call(*Interpreter, []loxtype.Type) (loxtype.Type, error)
-}
-
-type NativeFunction struct {
-	name  string
-	arity int
-	impl  func(*Interpreter, []loxtype.Type) (loxtype.Type, error)
-}
-
-var _ Callable = (*NativeFunction)(nil)
-
-func (nf *NativeFunction) Arity() int { return nf.arity }
-
-func (nf *NativeFunction) Call(i *Interpreter, args []loxtype.Type) (loxtype.Type, error) {
-	return nf.impl(i, args)
-}
-
-func (*NativeFunction) Equals(loxtype.Type) loxtype.Boolean { return false }
-func (*NativeFunction) IsTruthy() loxtype.Boolean           { return true }
-func (nf *NativeFunction) String() string                   { return fmt.Sprintf("<native fn: %s>", nf.name) }
-
 type Interpreter struct {
 	w       io.Writer
 	globals *environment.Environment
@@ -64,7 +40,7 @@ func New(w io.Writer) *Interpreter {
 			Type:   token.TypeIdentifier,
 			Lexeme: "clock",
 		},
-		&NativeFunction{
+		&nativeFunction{
 			name:  "clock",
 			arity: 0,
 			impl: func(*Interpreter, []loxtype.Type) (loxtype.Type, error) {
@@ -78,7 +54,7 @@ func New(w io.Writer) *Interpreter {
 			Type:   token.TypeIdentifier,
 			Lexeme: "exit",
 		},
-		&NativeFunction{
+		&nativeFunction{
 			name:  "exit",
 			arity: 0,
 			impl: func(*Interpreter, []loxtype.Type) (loxtype.Type, error) {

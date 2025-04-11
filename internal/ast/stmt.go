@@ -14,6 +14,7 @@ type Stmt interface {
 type StmtVisitor interface {
 	VisitBlockStmt(*environment.Environment, *BlockStmt) (loxtype.Type, error)
 	VisitExpressionStmt(*environment.Environment, *ExpressionStmt) (loxtype.Type, error)
+	VisitFunctionStmt(*environment.Environment, *FunctionStmt) (loxtype.Type, error)
 	VisitIfStmt(*environment.Environment, *IfStmt) (loxtype.Type, error)
 	VisitPrintStmt(*environment.Environment, *PrintStmt) (loxtype.Type, error)
 	VisitVarStmt(*environment.Environment, *VarStmt) (loxtype.Type, error)
@@ -50,6 +51,26 @@ func NewExpressionStmt(Expression Expr) *ExpressionStmt {
 
 func (e *ExpressionStmt) Accept(env *environment.Environment, visitor StmtVisitor) (loxtype.Type, error) {
 	return visitor.VisitExpressionStmt(env, e)
+}
+
+type FunctionStmt struct {
+	Name   *token.Token
+	Params []*token.Token
+	Body   []Stmt
+}
+
+var _ Stmt = (*FunctionStmt)(nil)
+
+func NewFunctionStmt(Name *token.Token, Params []*token.Token, Body []Stmt) *FunctionStmt {
+	return &FunctionStmt{
+		Name:   Name,
+		Params: Params,
+		Body:   Body,
+	}
+}
+
+func (e *FunctionStmt) Accept(env *environment.Environment, visitor StmtVisitor) (loxtype.Type, error) {
+	return visitor.VisitFunctionStmt(env, e)
 }
 
 type IfStmt struct {

@@ -41,6 +41,11 @@ func (i *Interpreter) VisitExpressionStmt(env *environment.Environment, s *ast.E
 	return nil, nil //nolint:nilnil // TODO: Emit final type?
 }
 
+func (i *Interpreter) VisitFunctionStmt(env *environment.Environment, s *ast.FunctionStmt) (loxtype.Type, error) {
+	env.Define(s.Name, (*function)(s))
+	return nil, nil //nolint:nilnil // TODO: Emit final type?
+}
+
 func (i *Interpreter) VisitIfStmt(env *environment.Environment, s *ast.IfStmt) (loxtype.Type, error) {
 	cond, err := i.evaluate(env, s.Condition)
 	if err != nil {

@@ -2,6 +2,7 @@ package parser
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/matt-hoiland/glox/internal/ast"
 	"github.com/matt-hoiland/glox/internal/loxtype"
@@ -10,25 +11,89 @@ import (
 
 // declaration implements the production:
 //
-//	declaration -> varDecl
+//	declaration -> funDecl
+//	             | varDecl
 //	             | statement ;
 func (p *Parser) declaration() (ast.Stmt, error) {
 	var (
 		stmt ast.Stmt
 		err  error
 	)
+
 	defer func() {
 		if err != nil {
 			p.synchronize()
 		}
 	}()
 
-	if p.match(token.TypeVar) {
+	switch {
+	case p.match(token.TypeFun):
+		stmt, err = p.function(function)
+	case p.match(token.TypeVar):
 		stmt, err = p.varDeclaration()
-		return stmt, err
+	default:
+		stmt, err = p.statement()
 	}
-	stmt, err = p.statement()
+
 	return stmt, err
+}
+
+type funcKind string
+
+const (
+	function funcKind = "function"
+	method   funcKind = "method"
+)
+
+// function implements the productions:
+//
+//	funDecl  -> "fun" function ;
+//	function -> IDENTIFIER "(" parameters? ")" block ;
+func (p *Parser) function(kind funcKind) (ast.Stmt, error) {
+	var (
+		name   *token.Token
+		params []*token.Token
+		body   []ast.Stmt
+		err    error
+	)
+
+	if name, err = p.consume(token.TypeIdentifier, fmt.Errorf("expect %s name", kind)); err != nil {
+		return nil, err
+	}
+
+	if _, err = p.consume(token.TypeLeftParen, fmt.Errorf("expect '(' after %s name", kind)); err != nil {
+		return nil, err
+	}
+
+	if !p.check(token.TypeRightParen) {
+		for {
+			// TODO: check len(params) <= 255
+
+			var param *token.Token
+			if param, err = p.consume(token.TypeIdentifier, errors.New("expect parameter name")); err != nil {
+				return nil, err
+			}
+			params = append(params, param)
+
+			if !p.match(token.TypeComma) {
+				break
+			}
+		}
+	}
+
+	if _, err = p.consume(token.TypeRightParen, errors.New("expect ')' after parameters")); err != nil {
+		return nil, err
+	}
+
+	if _, err = p.consume(token.TypeLeftBrace, fmt.Errorf("expect '{' before %s body", kind)); err != nil {
+		return nil, err
+	}
+
+	if body, err = p.block(); err != nil {
+		return nil, err
+	}
+
+	return ast.NewFunctionStmt(name, params, body), nil
 }
 
 // varDeclaration implements the production:

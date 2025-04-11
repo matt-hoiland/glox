@@ -14,17 +14,17 @@ func TestInterpreter_Evaluate(t *testing.T) {
 	t.Parallel()
 
 	type Test struct {
-		Name           string
-		Source         string
-		ExpectedOutput string
-		ExpectedError  error
+		Name          string
+		Source        string
+		Output        string
+		ExpectedError error
 	}
 
 	tests := []Test{
 		{
-			Name:           "success/negate_integer",
-			Source:         `print (- 4);`,
-			ExpectedOutput: "-4\n",
+			Name:   "success/negate_integer",
+			Source: `print (- 4);`,
+			Output: "-4\n",
 		},
 		{
 			Name:          "error/negate_string",
@@ -32,9 +32,9 @@ func TestInterpreter_Evaluate(t *testing.T) {
 			ExpectedError: interpreter.ErrNonNumericType,
 		},
 		{
-			Name:           "success/truthiness/nil_is_falsey",
-			Source:         `print (!nil);`,
-			ExpectedOutput: "true\n",
+			Name:   "success/truthiness/nil_is_falsey",
+			Source: `print (!nil);`,
+			Output: "true\n",
 		},
 		{
 			Name: "success/assignment",
@@ -43,7 +43,7 @@ func TestInterpreter_Evaluate(t *testing.T) {
 			a = "world";
 			print a;
 			`,
-			ExpectedOutput: "world\n",
+			Output: "world\n",
 		},
 		{
 			Name: "success/lexical_scope",
@@ -58,7 +58,7 @@ func TestInterpreter_Evaluate(t *testing.T) {
 				print a;
 				print shadowed;
 			`,
-			ExpectedOutput: stripIndentation(`
+			Output: dedent(`
 				block
 				6
 				shadow
@@ -87,7 +87,7 @@ func TestInterpreter_Evaluate(t *testing.T) {
 				print b;
 				print c;
 			`,
-			ExpectedOutput: stripIndentation(`
+			Output: dedent(`
 				inner a
 				outer b
 				global c
@@ -112,7 +112,7 @@ func TestInterpreter_Evaluate(t *testing.T) {
 					print "World!";
 				}
 			`,
-			ExpectedOutput: stripIndentation(`
+			Output: dedent(`
 				Hello
 				World!
 			`),
@@ -124,7 +124,7 @@ func TestInterpreter_Evaluate(t *testing.T) {
 				print nil or "yes";  // "yes".
 				print nil and "bye"; // "nil".
 			`,
-			ExpectedOutput: stripIndentation(`
+			Output: dedent(`
 				hi
 				yes
 				nil
@@ -139,7 +139,7 @@ func TestInterpreter_Evaluate(t *testing.T) {
 					i = i + 1;
 				}
 			`,
-			ExpectedOutput: stripIndentation(`
+			Output: dedent(`
 				Hello
 				Hello
 				Hello
@@ -159,7 +159,7 @@ func TestInterpreter_Evaluate(t *testing.T) {
 					a = b;
 				}
 			`,
-			ExpectedOutput: stripIndentation(`
+			Output: dedent(`
 				0
 				1
 				1
@@ -191,8 +191,24 @@ func TestInterpreter_Evaluate(t *testing.T) {
 					print "success";
 				}
 			`,
-			ExpectedOutput: stripIndentation(`
+			Output: dedent(`
 				success
+			`),
+		},
+		{
+			Name: "success/functions/count_to_three",
+			Source: `
+				fun count(n) {
+					if (n > 1) count(n - 1);
+					print n;
+				}
+
+				count(3);
+			`,
+			Output: dedent(`
+				1
+				2
+				3
 			`),
 		},
 	}
@@ -210,12 +226,12 @@ func TestInterpreter_Evaluate(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, test.ExpectedOutput, bob.String())
+			assert.Equal(t, test.Output, bob.String())
 		})
 	}
 }
 
-func stripIndentation(s string) string {
+func dedent(s string) string {
 	var (
 		bob             strings.Builder
 		passedFirstLine bool
