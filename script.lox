@@ -1,13 +1,40 @@
-fun makeCounter() {
-  var i = 0;
-  fun count() {
-    i = i + 1;
-    print i;
+fun Person(name, age) {
+  var _name = name;
+  var _age = age;
+
+  fun greet(self) {
+    var name = self("name", nil);
+    print "Hello " + name + "!";
   }
 
-  return count;
+  fun person(property, value) {
+    if (property == "name") {
+      if (value != nil) {
+        _name = value;
+      }
+      return _name;
+    }
+    if (property == "age") {
+      if (value != nil) {
+        _age = value;
+      }
+      return _age;
+    }
+    if (property == "greet") {
+      return greet;
+    }
+  }
+
+  return person;
 }
 
-var counter = makeCounter();
-counter(); // "1".
-counter(); // "2".
+var me = Person("Matt", 32);
+var mike = Person("Mike", 28);
+
+print me("name", nil);
+me("name", "Matthew");
+print me("name", nil);
+print me("age", nil);
+
+me("greet", nil)(me);
+mike("greet", nil)(mike);

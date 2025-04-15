@@ -27,12 +27,14 @@ var (
 type Interpreter struct {
 	w       io.Writer
 	globals *environment.Environment
+	locals  map[ast.Expr]int
 }
 
 func New(w io.Writer) *Interpreter {
 	env := &Interpreter{
 		w:       w,
 		globals: environment.New(),
+		locals:  map[ast.Expr]int{},
 	}
 
 	env.globals.Define(
@@ -83,6 +85,10 @@ func (i *Interpreter) Run(code string) error {
 		return err
 	}
 
+	if err = newResolver(i).resolveStmts(stmts); err != nil {
+		return err
+	}
+
 	if err = i.interpret(env, stmts); err != nil {
 		return err
 	}
@@ -104,4 +110,14 @@ func (i *Interpreter) interpret(env *environment.Environment, stmts []ast.Stmt) 
 		}
 	}
 	return nil
+}
+
+func (i *Interpreter) lookUpVariable(env *environment.Environment, name *token.Token,
+	expr *ast.VariableExpr) (loxtype.Type, error) {
+	distance := i.locals[expr]
+	return env.GetAt(name, distance)
+}
+
+func (i *Interpreter) resolve(expr ast.Expr, distance int) {
+	i.locals[expr] = distance
 }

@@ -17,6 +17,14 @@ func New() *Environment {
 	}
 }
 
+func (e *Environment) ancestor(distance int) *Environment {
+	env := e
+	for range distance {
+		env = env.enclosing
+	}
+	return env
+}
+
 func (e *Environment) Assign(name *token.Token, value loxtype.Type) error {
 	if _, ok := e.values[name.Lexeme]; ok {
 		e.values[name.Lexeme] = value
@@ -26,6 +34,10 @@ func (e *Environment) Assign(name *token.Token, value loxtype.Type) error {
 		return e.enclosing.Assign(name, value)
 	}
 	return ierrors.New(name, newUndefinedVariableError(name))
+}
+
+func (e *Environment) AssignAt(distance int, name *token.Token, value loxtype.Type) error {
+	return e.ancestor(distance).Assign(name, value)
 }
 
 func (e *Environment) Define(name *token.Token, value loxtype.Type) {
@@ -41,6 +53,10 @@ func (e *Environment) Get(name *token.Token) (loxtype.Type, error) {
 		return e.enclosing.Get(name)
 	}
 	return nil, ierrors.New(name, newUndefinedVariableError(name))
+}
+
+func (e *Environment) GetAt(name *token.Token, distance int) (loxtype.Type, error) {
+	return e.ancestor(distance).Get(name)
 }
 
 func (e *Environment) MakeChild() *Environment {

@@ -9,6 +9,13 @@ import (
 	"github.com/matt-hoiland/glox/internal/loxtype"
 )
 
+type functionType string
+
+const (
+	none     functionType = "NONE"
+	function functionType = "FUNCTION"
+)
+
 //nolint:errname // Intentional abuse of go's error system.
 type returnValue struct {
 	value loxtype.Type
@@ -41,26 +48,26 @@ type callable interface {
 	Call(*Interpreter, []loxtype.Type) (loxtype.Type, error)
 }
 
-type function struct {
+type loxFunction struct {
 	closure *environment.Environment
 	stmt    *ast.FunctionStmt
 }
 
-var _ callable = (*function)(nil)
+var _ callable = (*loxFunction)(nil)
 
-func newFunction(env *environment.Environment, stmt *ast.FunctionStmt) *function {
-	return &function{
+func newFunction(env *environment.Environment, stmt *ast.FunctionStmt) *loxFunction {
+	return &loxFunction{
 		closure: env,
 		stmt:    stmt,
 	}
 }
 
-func (f *function) Arity() int                        { return len(f.stmt.Params) }
-func (*function) Equals(loxtype.Type) loxtype.Boolean { return false }
-func (*function) IsTruthy() loxtype.Boolean           { return true }
-func (f *function) String() string                    { return fmt.Sprintf("<fn: %s>", f.stmt.Name.Lexeme) }
+func (f *loxFunction) Arity() int                        { return len(f.stmt.Params) }
+func (*loxFunction) Equals(loxtype.Type) loxtype.Boolean { return false }
+func (*loxFunction) IsTruthy() loxtype.Boolean           { return true }
+func (f *loxFunction) String() string                    { return fmt.Sprintf("<fn: %s>", f.stmt.Name.Lexeme) }
 
-func (f *function) Call(i *Interpreter, args []loxtype.Type) (loxtype.Type, error) {
+func (f *loxFunction) Call(i *Interpreter, args []loxtype.Type) (loxtype.Type, error) {
 	env := f.closure.MakeChild()
 	for i, param := range f.stmt.Params {
 		env.Define(param, args[i])

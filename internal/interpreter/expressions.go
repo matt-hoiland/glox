@@ -20,9 +20,12 @@ func (i *Interpreter) VisitAssignExpr(env *environment.Environment, e *ast.Assig
 	if err != nil {
 		return nil, err
 	}
-	if err = env.Assign(e.Name, value); err != nil {
+
+	distance := i.locals[e]
+	if err = env.AssignAt(distance, e.Name, value); err != nil {
 		return nil, err
 	}
+
 	return value, nil
 }
 
@@ -222,5 +225,5 @@ func (i *Interpreter) VisitUnaryExpr(env *environment.Environment, e *ast.UnaryE
 }
 
 func (i *Interpreter) VisitVariableExpr(env *environment.Environment, e *ast.VariableExpr) (loxtype.Type, error) {
-	return env.Get(e.Name)
+	return i.lookUpVariable(env, e.Name, e)
 }
