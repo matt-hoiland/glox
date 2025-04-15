@@ -129,6 +129,7 @@ func (p *Parser) varDeclaration() (ast.Stmt, error) {
 //	           | forStmt
 //	           | ifStmt
 //	           | printStmt
+//	           | returnStmt
 //	           | whileStmt
 //	           | block ;
 func (p *Parser) statement() (ast.Stmt, error) {
@@ -141,6 +142,9 @@ func (p *Parser) statement() (ast.Stmt, error) {
 
 	case p.match(token.TypePrint):
 		return p.printStatement()
+
+	case p.match(token.TypeReturn):
+		return p.returnStatement()
 
 	case p.match(token.TypeWhile):
 		return p.whileStatement()
@@ -283,6 +287,31 @@ func (p *Parser) printStatement() (ast.Stmt, error) {
 		return nil, err
 	}
 	return ast.NewPrintStmt(value), nil
+}
+
+// returnStatement implements the production:
+//
+//	returnStmt -> "return" expression? ";" ;
+func (p *Parser) returnStatement() (ast.Stmt, error) {
+	var (
+		keyword *token.Token
+		value   ast.Expr
+		err     error
+	)
+
+	keyword = p.previous()
+
+	if !p.check(token.TypeSemicolon) {
+		if value, err = p.expression(); err != nil {
+			return nil, err
+		}
+	}
+
+	if _, err = p.consume(token.TypeSemicolon, errors.New("expect ';' after semicolon")); err != nil {
+		return nil, err
+	}
+
+	return ast.NewReturnStmt(keyword, value), nil
 }
 
 // whileStatement implements the production:

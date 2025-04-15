@@ -17,6 +17,7 @@ type StmtVisitor interface {
 	VisitFunctionStmt(*environment.Environment, *FunctionStmt) (loxtype.Type, error)
 	VisitIfStmt(*environment.Environment, *IfStmt) (loxtype.Type, error)
 	VisitPrintStmt(*environment.Environment, *PrintStmt) (loxtype.Type, error)
+	VisitReturnStmt(*environment.Environment, *ReturnStmt) (loxtype.Type, error)
 	VisitVarStmt(*environment.Environment, *VarStmt) (loxtype.Type, error)
 	VisitWhileStmt(*environment.Environment, *WhileStmt) (loxtype.Type, error)
 }
@@ -107,6 +108,24 @@ func NewPrintStmt(Expression Expr) *PrintStmt {
 
 func (e *PrintStmt) Accept(env *environment.Environment, visitor StmtVisitor) (loxtype.Type, error) {
 	return visitor.VisitPrintStmt(env, e)
+}
+
+type ReturnStmt struct {
+	Keyword *token.Token
+	Value   Expr
+}
+
+var _ Stmt = (*ReturnStmt)(nil)
+
+func NewReturnStmt(Keyword *token.Token, Value Expr) *ReturnStmt {
+	return &ReturnStmt{
+		Keyword: Keyword,
+		Value:   Value,
+	}
+}
+
+func (e *ReturnStmt) Accept(env *environment.Environment, visitor StmtVisitor) (loxtype.Type, error) {
+	return visitor.VisitReturnStmt(env, e)
 }
 
 type VarStmt struct {

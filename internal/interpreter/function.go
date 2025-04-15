@@ -1,12 +1,39 @@
 package interpreter
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/matt-hoiland/glox/internal/ast"
 	"github.com/matt-hoiland/glox/internal/environment"
 	"github.com/matt-hoiland/glox/internal/loxtype"
 )
+
+//nolint:errname // Intentional abuse of go's error system.
+type returnValue struct {
+	value loxtype.Type
+}
+
+var _ error = (*returnValue)(nil)
+
+func (r *returnValue) Error() string {
+	return "return value"
+}
+
+func (i *Interpreter) VisitReturnStmt(env *environment.Environment, s *ast.ReturnStmt) (loxtype.Type, error) {
+	var (
+		value loxtype.Type
+		err   error
+	)
+
+	if s.Value != nil {
+		if value, err = i.evaluate(env, s.Value); err != nil {
+			return nil, err
+		}
+	}
+
+	return nil, &returnValue{value}
+}
 
 type callable interface {
 	loxtype.Type
@@ -28,10 +55,14 @@ func (f *function) Call(parent *environment.Environment, i *Interpreter, args []
 	for i, param := range f.Params {
 		env.Define(param, args[i])
 	}
-	if err := i.executeBlock(env, f.Body); err != nil {
+	var val *returnValue
+	if err := i.executeBlock(env, f.Body); err != nil && !errors.As(err, &val) {
 		return nil, err
 	}
-	return nil, nil //nolint:nilnil // TODO: Fix this later.
+	if val == nil || val.value == nil {
+		return loxtype.Nil{}, nil
+	}
+	return val.value, nil
 }
 
 type nativeFunction struct {

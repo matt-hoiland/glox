@@ -91,6 +91,10 @@ func (ap Printer) VisitPrintStmt(env *environment.Environment, s *PrintStmt) (lo
 	return loxtype.String("print " + value.String() + ";"), nil
 }
 
+func (Printer) VisitReturnStmt(*environment.Environment, *ReturnStmt) (loxtype.Type, error) {
+	panic("unimplemented")
+}
+
 func (ap Printer) VisitVarStmt(*environment.Environment, *VarStmt) (loxtype.Type, error) {
 	panic("unimplemented")
 }
