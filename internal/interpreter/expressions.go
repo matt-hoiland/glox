@@ -171,7 +171,7 @@ func (i *Interpreter) VisitCallExpr(env *environment.Environment, e *ast.CallExp
 		return nil, fmt.Errorf("expected %d arguments but got %d", function.Arity(), len(arguments))
 	}
 
-	return function.Call(env, i, arguments)
+	return function.Call(i, arguments)
 }
 
 func (i *Interpreter) VisitGroupingExpr(env *environment.Environment, e *ast.GroupingExpr) (loxtype.Type, error) {

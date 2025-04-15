@@ -38,25 +38,35 @@ func (i *Interpreter) VisitReturnStmt(env *environment.Environment, s *ast.Retur
 type callable interface {
 	loxtype.Type
 	Arity() int
-	Call(*environment.Environment, *Interpreter, []loxtype.Type) (loxtype.Type, error)
+	Call(*Interpreter, []loxtype.Type) (loxtype.Type, error)
 }
 
-type function ast.FunctionStmt
+type function struct {
+	closure *environment.Environment
+	stmt    *ast.FunctionStmt
+}
 
 var _ callable = (*function)(nil)
 
-func (f *function) Arity() int                        { return len(f.Params) }
+func newFunction(env *environment.Environment, stmt *ast.FunctionStmt) *function {
+	return &function{
+		closure: env,
+		stmt:    stmt,
+	}
+}
+
+func (f *function) Arity() int                        { return len(f.stmt.Params) }
 func (*function) Equals(loxtype.Type) loxtype.Boolean { return false }
 func (*function) IsTruthy() loxtype.Boolean           { return true }
-func (f *function) String() string                    { return fmt.Sprintf("<fn: %s>", f.Name.Lexeme) }
+func (f *function) String() string                    { return fmt.Sprintf("<fn: %s>", f.stmt.Name.Lexeme) }
 
-func (f *function) Call(parent *environment.Environment, i *Interpreter, args []loxtype.Type) (loxtype.Type, error) {
-	env := parent.MakeChild()
-	for i, param := range f.Params {
+func (f *function) Call(i *Interpreter, args []loxtype.Type) (loxtype.Type, error) {
+	env := f.closure.MakeChild()
+	for i, param := range f.stmt.Params {
 		env.Define(param, args[i])
 	}
 	var val *returnValue
-	if err := i.executeBlock(env, f.Body); err != nil && !errors.As(err, &val) {
+	if err := i.executeBlock(env, f.stmt.Body); err != nil && !errors.As(err, &val) {
 		return nil, err
 	}
 	if val == nil || val.value == nil {
@@ -78,6 +88,6 @@ func (*nativeFunction) Equals(loxtype.Type) loxtype.Boolean { return false }
 func (*nativeFunction) IsTruthy() loxtype.Boolean           { return true }
 func (nf *nativeFunction) String() string                   { return fmt.Sprintf("<native fn: %s>", nf.name) }
 
-func (nf *nativeFunction) Call(_ *environment.Environment, i *Interpreter, args []loxtype.Type) (loxtype.Type, error) {
+func (nf *nativeFunction) Call(i *Interpreter, args []loxtype.Type) (loxtype.Type, error) {
 	return nf.impl(i, args)
 }

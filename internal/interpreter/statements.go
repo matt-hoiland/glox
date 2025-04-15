@@ -42,7 +42,7 @@ func (i *Interpreter) VisitExpressionStmt(env *environment.Environment, s *ast.E
 }
 
 func (i *Interpreter) VisitFunctionStmt(env *environment.Environment, s *ast.FunctionStmt) (loxtype.Type, error) {
-	env.Define(s.Name, (*function)(s))
+	env.Define(s.Name, newFunction(env, s))
 	return nil, nil //nolint:nilnil // TODO: Emit final type?
 }
 
